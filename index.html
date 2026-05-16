@@ -417,24 +417,22 @@ function setOpts(id,vals,def='Todos'){
 }
 
 async function loadData(){
-  const file=CONFIG.archivoExcel;
-  document.getElementById('load-sub').textContent=`Cargando ${file}…`;
+  document.getElementById('load-sub').textContent=`Cargando datos…`;
   try{
-    const resp=await fetch(`https://raw.githubusercontent.com/matiasbuendia08/resultados_electorales_2026/main/${file}`);
     const resp = await fetch(`https://raw.githubusercontent.com/matiasbuendia08/resultados_electorales_2026/main/datos.json.gz`);
-if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
-const buf = await resp.arrayBuffer();
-const ds = new DecompressionStream('gzip');
-const writer = ds.writable.getWriter();
-writer.write(new Uint8Array(buf));
-writer.close();
-const out = await new Response(ds.readable).arrayBuffer();
-const raw = JSON.parse(new TextDecoder().decode(out));
-    initApp(raw,file);
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const buf = await resp.arrayBuffer();
+    const ds = new DecompressionStream('gzip');
+    const writer = ds.writable.getWriter();
+    writer.write(new Uint8Array(buf));
+    writer.close();
+    const out = await new Response(ds.readable).arrayBuffer();
+    const raw = JSON.parse(new TextDecoder().decode(out));
+    initApp(raw,'datos.json.gz');
   }catch(e){
     document.getElementById('spinner').style.display='none';
     document.getElementById('load-sub').style.display='none';
-    document.getElementById('err-file').textContent=file;
+    document.getElementById('err-file').textContent='datos.json.gz';
     document.getElementById('load-error').style.display='block';
     console.error(e);
   }
