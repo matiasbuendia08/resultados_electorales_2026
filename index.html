@@ -34,13 +34,6 @@ const CONFIG = {
 // Variables para el explorador — cada entrada define cómo leer y mostrar la serie
 const VARIABLES = [
  { grupo:"── Desarrollo humano ──", opciones:[
-    { id:"idh_ide", etiqueta:"Índice de Desarrollo Humano vs. Índice de Densidad del Estado", esDual:true,
-      series:[
-        {clave:"idh",sufijo:"20",sep:"",años:["17","18","19","20","21","22","23","24"],etiqueta:"IDH",color:"#4A8A8A",fmtY:v=>v.toFixed(3)},
-        {clave:"ide",sufijo:"",sep:"_",años:["17","18","19","20","21","22","23","24"],etiqueta:"IDE",color:"#C04A4A",fmtY:v=>v.toFixed(3)},
-      ],
-      nota:"<strong>IDH</strong>: salud, educación e ingresos (0–1). <strong>IDE</strong>: presencia del Estado en salud, educación, identidad, saneamiento y electrificación (0–1). Fuente: PNUD / PNUD-DGSE · Elaboración propia.",
-    },
     { id:"idh", etiqueta:"Índice de Desarrollo Humano (IDH)", esDual:false,
       series:[{clave:"idh",sufijo:"20",sep:"",años:["17","18","19","20","21","22","23","24"],etiqueta:"IDH",color:"#4A8A8A",fmtY:v=>v.toFixed(3)}],
       nota:"El <strong>IDH</strong> mide el desarrollo humano en tres dimensiones: salud, educación e ingresos (0–1). Fuente: PNUD · Elaboración propia.",
