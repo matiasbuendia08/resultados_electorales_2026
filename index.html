@@ -395,7 +395,7 @@ async function loadData() {
   document.getElementById('load-sub').textContent = `Cargando ${file}…`;
   try {
     const usuario = "matiasbuendia08";  // tu usuario de GitHub
-const repo    = "elecciones-2026";  // nombre exacto de tu repositorio
+const repo    = "resultados_electorales_2026";  // nombre exacto de tu repositorio
 const branch  = "main";
 const resp = await fetch(
   `https://raw.githubusercontent.com/${usuario}/${repo}/${branch}/${file}`
