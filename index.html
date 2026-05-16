@@ -281,6 +281,20 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
       <div class="did-box fade-in" id="did-box" style="display:none">
         <h3 id="did-title"></h3>
         <div class="did-grid" id="did-grid"></div>
+        <div id="idh-chart-section" style="display:none;margin-top:1rem">
+  <div class="section-label">IDH 2017–2024</div>
+  <div style="background:var(--bg3);border-radius:6px;padding:1rem;margin-bottom:.5rem">
+    <canvas id="chart-idh" height="120"></canvas>
+  </div>
+  <p style="font-size:11px;color:var(--text3);line-height:1.6">
+    El Índice de Desarrollo Humano (IDH) combina tres dimensiones: 
+    <strong style="color:var(--text2)">salud</strong> (esperanza de vida al nacer), 
+    <strong style="color:var(--text2)">educación</strong> (años de escolaridad esperados y promedio) e 
+    <strong style="color:var(--text2)">ingresos</strong> (INB per cápita). 
+    Va de 0 a 1, donde valores más altos indican mayor desarrollo.<br>
+    <span style="color:var(--text3);margin-top:3px;display:block">Fuente: PNUD · Elaboración propia</span>
+  </p>
+</div>
         <div class="ind-section" id="ind-section" style="display:none">
           <div class="section-label">Indicadores socioeconómicos</div>
           <div class="ind-grid" id="ind-grid"></div>
@@ -377,6 +391,14 @@ function normalize(r) {
     votos:        parseInt(g('votos','Votos'))||0,
     pct_validos:  parseFloat(g('pct_validos','pct validos'))||0,
     pct_emitidos: parseFloat(g('pct_emitidos','pct emitidos'))||0,
+    idh2017: parseFloat(g('idh2017'))||null,
+idh2018: parseFloat(g('idh2018'))||null,
+idh2019: parseFloat(g('idh2019'))||null,
+idh2020: parseFloat(g('idh2020'))||null,
+idh2021: parseFloat(g('idh2021'))||null,
+idh2022: parseFloat(g('idh2022'))||null,
+idh2023: parseFloat(g('idh2023'))||null,
+idh2024: parseFloat(g('idh2024'))||null,
   };
   CONFIG.indicadoresDistrito.forEach(ind=>{row[ind.clave]=parseFloat(g(ind.clave))||null});
   return row;
@@ -657,6 +679,42 @@ function renderDidactic() {
       document.getElementById('ind-section').style.display='';
     }
   }
+  // Gráfico IDH
+let idhChart = window._idhChart;
+const idhSection = document.getElementById('idh-chart-section');
+const años = ['2017','2018','2019','2020','2021','2022','2023','2024'];
+const row0 = FILTERED[0];
+const idhVals = años.map(a => row0?.['idh'+a] || null);
+const hasIdh = idhVals.some(v => v !== null);
+if(hasIdh) {
+  idhSection.style.display = '';
+  if(idhChart) idhChart.destroy();
+  window._idhChart = new Chart(document.getElementById('chart-idh'), {
+    type: 'line',
+    data: {
+      labels: años,
+      datasets: [{
+        data: idhVals,
+        borderColor: '#4A8A8A',
+        backgroundColor: 'rgba(74,138,138,0.08)',
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: '#4A8A8A',
+        tension: 0.3,
+        spanGaps: true,
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#5A5654', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'transparent' } },
+        y: { ticks: { color: '#5A5654', font: { size: 11 }, callback: v => v.toFixed(3) }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'transparent' } }
+      }
+    }
+  });
+} else {
+  idhSection.style.display = 'none';
+}
   document.getElementById('did-box').style.display='';
 }
 
