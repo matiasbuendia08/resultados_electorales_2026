@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Resultados Electorales Perú 2026</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script>
@@ -422,11 +421,15 @@ async function loadData(){
   document.getElementById('load-sub').textContent=`Cargando ${file}…`;
   try{
     const resp=await fetch(`https://raw.githubusercontent.com/matiasbuendia08/resultados_electorales_2026/main/${file}`);
-    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const buf=await resp.arrayBuffer();
-    const wb=XLSX.read(buf,{type:'array'});
-    const ws=wb.Sheets[wb.SheetNames[0]];
-    const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
+    const resp = await fetch(`https://raw.githubusercontent.com/matiasbuendia08/resultados_electorales_2026/main/datos.json.gz`);
+if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+const buf = await resp.arrayBuffer();
+const ds = new DecompressionStream('gzip');
+const writer = ds.writable.getWriter();
+writer.write(new Uint8Array(buf));
+writer.close();
+const out = await new Response(ds.readable).arrayBuffer();
+const raw = JSON.parse(new TextDecoder().decode(out));
     initApp(raw,file);
   }catch(e){
     document.getElementById('spinner').style.display='none';
