@@ -51,7 +51,6 @@ const CONFIG = {
   { clave:"colegios_sust", etiqueta:"Colegios en sustitución", formato: v=>v.toFixed(1)+"%", color:"#C04A4A", nota: "Año: 2017. Fuente: INEI. Cálculos propios" },
   { clave:"viviendas_3sb", etiqueta:"Viviendas 3 SB (%)",      formato: v=>v.toFixed(1)+"%", color:"#C0932A", nota: "Año: 2017. Funete: INEI. Cálculos propios" },
 ],
-  indicadoresDistrito: [],
 
   filasPorPagina:     50,
   distritosPorPagina: 24,
@@ -441,7 +440,7 @@ function applyFilters() {
   const q     = document.getElementById('f-search').value.toLowerCase().trim();
 
   FILTERED = ALL.filter(r=>
-    (!nivel || r.nivel===nivel) &&
+    (true) &&
     (!depto || r.departamento===depto) &&
     (!prov  || r.provincia===prov) &&
     (!dist  || r.distrito===dist) &&
@@ -454,7 +453,7 @@ function applyFilters() {
 }
 
 function resetFilters() {
-  ['f-nivel','f-depto','f-prov','f-dist','f-search'].forEach(id=>document.getElementById(id).value='');
+  ['f-depto','f-prov','f-dist','f-search'].forEach(id=>document.getElementById(id).value='');
   setOpts('f-prov',[],'Todas'); setOpts('f-dist',[],'Todos');
   document.getElementById('filter-count').textContent='';
   FILTERED=[...ALL]; rankP=0; distP=0; render();
@@ -609,15 +608,14 @@ function renderDidactic() {
   const dist =document.getElementById('f-dist').value;
   const prov =document.getElementById('f-prov').value;
   const depto=document.getElementById('f-depto').value;
-  const nivel=document.getElementById('f-nivel').value;
-  if(!dist&&!prov&&!depto&&!nivel){document.getElementById('did-box').style.display='none';return;}
+  if(!dist&&!prov&&!depto){document.getElementById('did-box').style.display='none';return;}
 
   const cands =FILTERED.filter(r=>r.tipo==='CANDIDATO').sort((a,b)=>b.votos-a.votos);
   const blancos=FILTERED.filter(r=>r.tipo==='VOTO EN BLANCO').reduce((s,r)=>s+r.votos,0);
   const nulos  =FILTERED.filter(r=>r.tipo==='VOTO NULO').reduce((s,r)=>s+r.votos,0);
   const total  =cands.reduce((s,r)=>s+r.votos,0);
   const winner =cands[0];
-  const geoLabel=dist||prov||depto||nivel;
+  const geoLabel=dist||prov||depto;
 
   document.getElementById('did-title').textContent=geoLabel;
   document.getElementById('did-grid').innerHTML=`
