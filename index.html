@@ -33,19 +33,27 @@ const CONFIG = {
 
 // Variables para el explorador — cada entrada define cómo leer y mostrar la serie
 const VARIABLES = [
-  { grupo:"── Desarrollo humano ──", opciones:[
-    { id:"idh_ide", etiqueta:"IDH vs. Índice de Densidad del Estado", esDual:true,
+ { grupo:"── Desarrollo humano ──", opciones:[
+    { id:"idh_ide", etiqueta:"Índice de Desarrollo Humano vs. Índice de Densidad del Estado", esDual:true,
       series:[
         {clave:"idh",sufijo:"20",sep:"",años:["17","18","19","20","21","22","23","24"],etiqueta:"IDH",color:"#4A8A8A",fmtY:v=>v.toFixed(3)},
         {clave:"ide",sufijo:"",sep:"_",años:["17","18","19","20","21","22","23","24"],etiqueta:"IDE",color:"#C04A4A",fmtY:v=>v.toFixed(3)},
       ],
       nota:"<strong>IDH</strong>: salud, educación e ingresos (0–1). <strong>IDE</strong>: presencia del Estado en salud, educación, identidad, saneamiento y electrificación (0–1). Fuente: PNUD / PNUD-DGSE · Elaboración propia.",
     },
+    { id:"idh", etiqueta:"Índice de Desarrollo Humano (IDH)", esDual:false,
+      series:[{clave:"idh",sufijo:"20",sep:"",años:["17","18","19","20","21","22","23","24"],etiqueta:"IDH",color:"#4A8A8A",fmtY:v=>v.toFixed(3)}],
+      nota:"El <strong>IDH</strong> mide el desarrollo humano en tres dimensiones: salud, educación e ingresos (0–1). Fuente: PNUD · Elaboración propia.",
+    },
+    { id:"ide_solo", etiqueta:"Índice de Densidad del Estado (IDE)", esDual:false,
+      series:[{clave:"ide",sufijo:"",sep:"_",años:["17","18","19","20","21","22","23","24"],etiqueta:"IDE",color:"#C04A4A",fmtY:v=>v.toFixed(3)}],
+      nota:"El <strong>IDE</strong> mide la presencia del Estado en salud, educación, identidad, saneamiento y electrificación (0–1). Fuente: PNUD-DGSE · Elaboración propia.",
+    },
   ]},
   { grupo:"── Educación ──", opciones:[
     { id:"sec", etiqueta:"Matrícula en secundaria (%)", esDual:false,
       series:[{clave:"sec",sufijo:"",sep:"_",años:["17","18","19","20","21","22","23","24"],etiqueta:"Secundaria matriculada (%)",color:"#1A6BB5",fmtY:v=>(v*100).toFixed(1)+"%",mult:100}],
-      nota:"Porcentaje de personas entre 12 y 16 años matriculadas en educación secundaria. Fuente: MINEDU · Elaboración propia.",
+      nota:"Porcentaje de personas entre 12 y 16 años matriculadas en educación secundaria. Fuente: PNUD · Elaboración propia.",
       minY:0,maxY:100,
     },
     { id:"añoseduc", etiqueta:"Años de educación promedio", esDual:false,
@@ -65,7 +73,7 @@ const VARIABLES = [
     },
     { id:"med", etiqueta:"Médicos por 100,000 habitantes", esDual:false,
       series:[{clave:"med",sufijo:"",sep:"_",años:["17","18","19","20","21","22","23","24"],etiqueta:"Médicos / 100k hab.",color:"#C04A4A",fmtY:v=>v.toFixed(1)}],
-      nota:"Número de médicos por cada 100,000 habitantes. Fuente: MINSA · Elaboración propia.",
+      nota:"Número de médicos por cada 100,000 habitantes. Fuente: PNUD · Elaboración propia.",
     },
   ]},
   { grupo:"── Economía ──", opciones:[
@@ -282,7 +290,7 @@ footer{border-top:1px solid var(--border);padding:1.25rem 2rem;display:flex;just
         <!-- Gráfico 1: IDH vs IDE -->
         <div class="chart-section" id="idh-ide-section" style="display:none">
           <div class="chart-section-header">
-            <div class="chart-section-title">IDH vs. Índice de Densidad del Estado 2017–2024</div>
+            <div class="chart-section-title">Índice de Desarrollo Humano vs. Índice de Densidad del Estado 2017–2024</div>
           </div>
           <div class="chart-canvas-wrap"><canvas id="chart-idh-ide" height="120"></canvas></div>
           <p class="chart-nota">El <strong>IDH</strong> mide desarrollo humano (0–1). El <strong>IDE</strong> mide presencia del Estado en salud, educación, identidad, saneamiento y electrificación (0–1). Comparar ambos revela si mayor presencia estatal se asocia con mayor desarrollo en el territorio.<br><span style="display:block;margin-top:3px">Fuente: PNUD / PNUD-DGSE · Elaboración propia</span></p>
