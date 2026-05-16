@@ -575,6 +575,7 @@ function renderDidactic(){
   const prov=document.getElementById('f-prov').value;
   const depto=document.getElementById('f-depto').value;
   if(!dist&&!prov&&!depto){document.getElementById('did-box').style.display='none';return;}
+const soloDistrito = !!dist;
 
   const cands=FILTERED.filter(r=>r.tipo==='CANDIDATO').sort((a,b)=>b.votos-a.votos);
   const blancos=FILTERED.filter(r=>r.tipo==='VOTO EN BLANCO').reduce((s,r)=>s+r.votos,0);
@@ -598,7 +599,7 @@ function renderDidactic(){
       return `<div class="ind-card" style="border-left-color:${ind.color}"><div class="ind-label">${ind.etiqueta}</div><div class="ind-value" style="color:${ind.color}">${ind.formato(val)}</div>${ind.nota?`<div style="font-size:10px;color:var(--text3);margin-top:3px">${ind.nota}</div>`:''}</div>`;
     }).join('');
     document.getElementById('ind-grid').innerHTML=items||'';
-    document.getElementById('ind-section').style.display=items?'':'none';
+    document.getElementById('ind-section').style.display=(items&&soloDistrito)?'':'none';
   }
 
  // Gráfico IDH vs IDE
@@ -608,7 +609,7 @@ function renderDidactic(){
   const ideVals=años17_24.map(a=>row0?.['ide_'+a]||null);
   const hasIde=ideVals.some(v=>v!==null);
   const idhIdeSec=document.getElementById('idh-ide-section');
-  if(hasIdh&&hasIde){
+  if(hasIdh&&hasIde&&soloDistrito){
     idhIdeSec.style.display='';
     const old=window['_ch_chart-idh-ide'];if(old) old.destroy();
 window['_ch_chart-idh-ide']=new Chart(document.getElementById('chart-idh-ide'),{
@@ -634,7 +635,8 @@ window['_ch_chart-idh-ide']=new Chart(document.getElementById('chart-idh-ide'),{
   // Explorador
   const hasAnyVar=VARIABLES.some(g=>g.opciones.some(op=>op.series.some(s=>s.años.some(a=>getVal(row0,s,a)!==null))));
   const explSec=document.getElementById('explorador-section');
-  if(hasAnyVar&&row0){explSec.style.display='';renderExplorador();}
+  if(hasAnyVar&&row0&&soloDistrito){explSec.style.display='';renderExplorador();}
+else explSec.style.display='none';
   else explSec.style.display='none';
 
   document.getElementById('did-box').style.display='';
