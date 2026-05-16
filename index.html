@@ -45,12 +45,12 @@ const CONFIG = {
   // 1. Agrégalos a distrital_web.xlsx con estas columnas exactas
   // 2. Descomenta el bloque de abajo
   //
-  // indicadoresDistrito: [
-  //   { clave:"idh",              etiqueta:"IDH",           formato: v=>v.toFixed(3),    color:"#4A8A8A" },
-  //   { clave:"pct_agua",         etiqueta:"Agua potable",  formato: v=>v.toFixed(1)+"%", color:"#2A7D4F" },
-  //   { clave:"pct_electricidad", etiqueta:"Electricidad",  formato: v=>v.toFixed(1)+"%", color:"#C0932A" },
-  //   { clave:"pct_internet",     etiqueta:"Internet",      formato: v=>v.toFixed(1)+"%", color:"#1A6BB5" },
-  // ],
+  indicadoresDistrito: [
+  { clave:"idh2024",       etiqueta:"IDH 2024",                formato: v=>v.toFixed(3),    color:"#4A8A8A", nota:"Año: 2024. Fuente: PNUD" },
+  { clave:"colegios_3sb",  etiqueta:"Colegios 3 SB (%)",       formato: v=>v.toFixed(1)+"%", color:"#1A6BB5", nota: "Año: 2025. Fuente: MINEDU. Cálculos propios" },
+  { clave:"colegios_sust", etiqueta:"Colegios en sustitución", formato: v=>v.toFixed(1)+"%", color:"#C04A4A", nota: "Año: 2017. Fuente: INEI. Cálculos propios" },
+  { clave:"viviendas_3sb", etiqueta:"Viviendas 3 SB (%)",      formato: v=>v.toFixed(1)+"%", color:"#C0932A", nota: "Año: 2017. Funete: INEI. Cálculos propios" },
+],
   indicadoresDistrito: [],
 
   filasPorPagina:     50,
@@ -644,9 +644,10 @@ function renderDidactic() {
       const val=row[ind.clave];
       if(!val||isNaN(val)) return '';
       return `<div class="ind-card" style="border-left-color:${ind.color}">
-        <div class="ind-label">${ind.etiqueta}</div>
-        <div class="ind-value" style="color:${ind.color}">${ind.formato(val)}</div>
-      </div>`;
+  <div class="ind-label">${ind.etiqueta}</div>
+  <div class="ind-value" style="color:${ind.color}">${ind.formato(val)}</div>
+  ${ind.nota ? `<div style="font-size:10px;color:var(--text3);margin-top:3px">${ind.nota}</div>` : ''}
+</div>`;
     }).join('');
     if(items){
       document.getElementById('ind-grid').innerHTML=items;
