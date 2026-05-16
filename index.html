@@ -394,7 +394,12 @@ async function loadData() {
   const file = CONFIG.archivoExcel;
   document.getElementById('load-sub').textContent = `Cargando ${file}…`;
   try {
-    const resp = await fetch(file);
+    const usuario = "matiasbuendia08";  // tu usuario de GitHub
+const repo    = "elecciones-2026";  // nombre exacto de tu repositorio
+const branch  = "main";
+const resp = await fetch(
+  `https://raw.githubusercontent.com/${usuario}/${repo}/${branch}/${file}`
+);
     if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const buf = await resp.arrayBuffer();
     const wb  = XLSX.read(buf,{type:'array'});
