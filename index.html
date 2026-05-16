@@ -339,6 +339,12 @@ footer{border-top:1px solid var(--border);padding:1.25rem 2rem;display:flex;just
 
   <footer>
     <span id="footer-src"></span>
+<span>
+  @Matias Buendia &nbsp;·&nbsp;
+  <a href="https://www.linkedin.com/in/matiasbuendia/" target="_blank"
+     title="LinkedIn de Matias Buendia"
+     style="color:var(--text3);text-decoration:none;font-size:15px">in</a>
+</span>
     <span id="footer-rows"></span>
   </footer>
 </div>
@@ -418,7 +424,7 @@ function initApp(raw, filename) {
 
   document.getElementById('hero-sub').textContent    = CONFIG.subtitulo;
   document.getElementById('footer-src').textContent  = CONFIG.fuente;
-  document.getElementById('header-meta').textContent = filename+' · '+fmtN(ALL.length)+' registros';
+  document.getElementById('header-meta').textContent = '';
   document.getElementById('footer-rows').textContent = fmtN(ALL.length)+' filas cargadas';
 
   render();
@@ -443,8 +449,7 @@ function applyFilters() {
   );
 
   rankP=0; distP=0;
-  document.getElementById('filter-count').textContent=
-    FILTERED.length.toLocaleString('es-PE')+' filas';
+  document.getElementById('filter-count').textContent='';
   render();
 }
 
@@ -603,7 +608,7 @@ function renderDidactic() {
   const winner =cands[0];
   const geoLabel=dist||prov||depto||nivel;
 
-  document.getElementById('did-title').textContent=`Datos: ${geoLabel}`;
+  document.getElementById('did-title').textContent=geoLabel;
   document.getElementById('did-grid').innerHTML=`
     <div class="did-item">
       <div class="did-item-label">Candidato más votado</div>
