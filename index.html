@@ -578,11 +578,19 @@ function renderDidactic(){
   if(!dist&&!prov&&!depto){document.getElementById('did-box').style.display='none';return;}
 const soloDistrito = !!dist;
 
-  const cands=FILTERED.filter(r=>r.tipo==='CANDIDATO').sort((a,b)=>b.votos-a.votos);
   const blancos=FILTERED.filter(r=>r.tipo==='VOTO EN BLANCO').reduce((s,r)=>s+r.votos,0);
-  const nulos=FILTERED.filter(r=>r.tipo==='VOTO NULO').reduce((s,r)=>s+r.votos,0);
-  const total=cands.reduce((s,r)=>s+r.votos,0);
-  const winner=cands[0];
+const nulos=FILTERED.filter(r=>r.tipo==='VOTO NULO').reduce((s,r)=>s+r.votos,0);
+
+// Agrupar votos por candidato+partido para evitar duplicados por distrito
+const porCand={};
+FILTERED.filter(r=>r.tipo==='CANDIDATO').forEach(r=>{
+  const key=r.candidato+'|'+r.partido;
+  if(!porCand[key]) porCand[key]={candidato:r.candidato,partido:r.partido,votos:0};
+  porCand[key].votos+=r.votos;
+});
+const cands=Object.values(porCand).sort((a,b)=>b.votos-a.votos);
+const total=cands.reduce((s,r)=>s+r.votos,0);
+const winner=cands[0];
   document.getElementById('did-title').textContent='';
   document.getElementById('did-grid').innerHTML=`
     <div class="did-item"><div class="did-item-label">Candidato más votado</div><div class="did-item-value" style="font-size:.95rem;color:${pColor(winner?.partido||'')}">${winner?.candidato||'—'}</div><div class="did-item-sub">${winner?.partido||''}</div></div>
