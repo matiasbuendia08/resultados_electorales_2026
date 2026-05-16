@@ -196,6 +196,7 @@ tr:last-child td{border-bottom:none} tr:hover td{background:var(--bg3)}
 footer{border-top:1px solid var(--border);padding:1.25rem 2rem;display:flex;justify-content:space-between;color:var(--text3);font-size:12px}
 .fade-in{animation:fadeIn .35s ease forwards}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+select:disabled { opacity: 0.35; cursor: not-allowed; }
 ::-webkit-scrollbar{width:5px;height:5px} ::-webkit-scrollbar-track{background:var(--bg2)} ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
 </style>
 </head>
@@ -228,15 +229,6 @@ footer{border-top:1px solid var(--border);padding:1.25rem 2rem;display:flex;just
   </div>
 
   <div class="filters">
-    <div class="filter-group">
-      <span class="filter-label">Nivel</span>
-      <select id="f-nivel">
-        <option value="">Todos</option>
-        <option value="Nacional">Nacional</option>
-        <option value="Provincia">Provincial</option>
-        <option value="Distrito">Distrital</option>
-      </select>
-    </div>
     <div class="filter-group">
       <span class="filter-label">Departamento</span>
       <select id="f-depto"><option value="">Todos</option></select>
@@ -438,7 +430,6 @@ function initApp(raw, filename) {
 
 // ── Filtros ────────────────────────────────────────────────────
 function applyFilters() {
-  const nivel = document.getElementById('f-nivel').value;
   const depto = document.getElementById('f-depto').value;
   const prov  = document.getElementById('f-prov').value;
   const dist  = document.getElementById('f-dist').value;
@@ -465,12 +456,23 @@ function resetFilters() {
 }
 
 // Cascada de filtros
-document.getElementById('f-nivel').addEventListener('change', applyFilters);
 document.getElementById('f-search').addEventListener('input',  applyFilters);
 document.getElementById('f-depto').addEventListener('change', ()=>{
-  const depto=document.getElementById('f-depto').value;
-  const provs=[...new Set(ALL.filter(r=>!depto||r.departamento===depto).map(r=>r.provincia).filter(v=>v&&v!=='—'))].sort();
-  setOpts('f-prov',provs,'Todas'); setOpts('f-dist',[],'Todos');
+  const depto = document.getElementById('f-depto').value;
+  const esPeru = depto === 'PERÚ';
+
+  // Bloquear / desbloquear provincia y distrito
+  document.getElementById('f-prov').disabled = esPeru;
+  document.getElementById('f-dist').disabled = esPeru;
+
+  if(esPeru){
+    setOpts('f-prov',[],'Todas');
+    setOpts('f-dist',[],'Todos');
+  } else {
+    const provs=[...new Set(ALL.filter(r=>!depto||r.departamento===depto).map(r=>r.provincia).filter(v=>v&&v!=='—'))].sort();
+    setOpts('f-prov',provs,'Todas');
+    setOpts('f-dist',[],'Todos');
+  }
   applyFilters();
 });
 document.getElementById('f-prov').addEventListener('change', ()=>{
