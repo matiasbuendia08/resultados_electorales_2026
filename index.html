@@ -339,11 +339,15 @@ footer{border-top:1px solid var(--border);padding:1.25rem 2rem;display:flex;just
 
   <footer>
     <span id="footer-src"></span>
-<span>
-  @Matias Buendia &nbsp;·&nbsp;
+<span style="display:flex;align-items:center;gap:6px">
+  Elaborado por Matias Buendia
   <a href="https://www.linkedin.com/in/matiasbuendia/" target="_blank"
-     title="LinkedIn de Matias Buendia"
-     style="color:var(--text3);text-decoration:none;font-size:15px">in</a>
+     title="Ver perfil en LinkedIn"
+     style="display:inline-flex;align-items:center;justify-content:center;
+            width:18px;height:18px;border-radius:3px;
+            background:#0A66C2;text-decoration:none;
+            font-size:11px;font-weight:700;color:white;font-family:sans-serif;
+            line-height:1">in</a>
 </span>
     <span id="footer-rows"></span>
   </footer>
@@ -425,7 +429,7 @@ function initApp(raw, filename) {
   document.getElementById('hero-sub').textContent    = CONFIG.subtitulo;
   document.getElementById('footer-src').textContent  = CONFIG.fuente;
   document.getElementById('header-meta').textContent = '';
-  document.getElementById('footer-rows').textContent = fmtN(ALL.length)+' filas cargadas';
+  document.getElementById('footer-rows').textContent = '';
 
   render();
   document.getElementById('loading-screen').classList.add('hidden');
