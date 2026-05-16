@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resultados Electorales Perú 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script>
+const CONFIG = {
+  archivoExcel: "distrital_web.xlsx",
+  subtitulo: "Resultados al 100% de actas contabilizadas · ONPE",
+  fuente: "Fuente: ONPE · Elaboración propia",
+  coloresPartidos: {
+    "FUERZA POPULAR":"#E8620A","JUNTOS POR EL PERÚ":"#2A7D4F",
+    "RENOVACIÓN POPULAR":"#1A6BB5","PARTIDO DEL BUEN GOBIERNO":"#C0932A",
+    "PARTIDO CÍVICO OBRAS":"#7B5EA7","AHORA NACIÓN - AN":"#C04A4A",
+    "PARTIDO PAÍS PARA TODOS":"#4A8A8A","ALIANZA PARA EL PROGRESO":"#B54A1A",
+    "PARTIDO APRISTA PERUANO":"#8B1A1A","PARTIDO DEMOCRÁTICO SOMOS PERÚ":"#2A5A8A",
+    "VOTOS EN BLANCO":"#C8B89A","VOTOS NULOS":"#6A6A6A",
+  },
+  partido1:{nombre:"FUERZA POPULAR",etiqueta:"Fuerza Popular"},
+  partido2:{nombre:"JUNTOS POR EL PERÚ",etiqueta:"Juntos por el Perú"},
+  indicadoresDistrito:[
+    {clave:"idh2024",etiqueta:"IDH 2024",formato:v=>v.toFixed(3),color:"#4A8A8A",nota:"Año: 2024. Fuente: PNUD"},
+    {clave:"colegios_3sb",etiqueta:"Colegios 3 SB (%)",formato:v=>v.toFixed(1)+"%",color:"#1A6BB5",nota:"Año: 2025. Fuente: MINEDU. Cálculos propios"},
+    {clave:"colegios_sust",etiqueta:"Colegios en sustitución",formato:v=>v.toFixed(1)+"%",color:"#C04A4A",nota:"Año: 2017. Fuente: INEI. Cálculos propios"},
+    {clave:"viviendas_3sb",etiqueta:"Viviendas 3 SB (%)",formato:v=>v.toFixed(1)+"%",color:"#C0932A",nota:"Año: 2017. Fuente: INEI. Cálculos propios"},
+  ],
+  filasPorPagina:50,
+  distritosPorPagina:24,
+};
+
+// Variables para el explorador — cada entrada define cómo leer y mostrar la serie
+const VARIABLES = [
+  { grupo:"── Desarrollo humano ──", opciones:[
+    { id:"idh_ide", etiqueta:"IDH vs. Índice de Densidad del Estado", esDual:true,
+      series:[
+        {clave:"idh",sufijo:"20",sep:"",años:["17","18","19","20","21","22","23","24"],etiqueta:"IDH",color:"#4A8A8A",fmtY:v=>v.toFixed(3)},
+        {clave:"ide",sufijo:"",sep:"_",años:["17","18","19","20","21","22","23","24"],etiqueta:"IDE",color:"#C04A4A",fmtY:v=>v.toFixed(3)},
+      ],
+      nota:"<strong>IDH</strong>: salud, educación e ingresos (0–1). <strong>IDE</strong>: presencia del Estado en salud, educación, identidad, saneamiento y electrificación (0–1). Fuente: PNUD / PNUD-DGSE · Elaboración propia.",
+    },
+  ]},
+  { grupo:"── Educación ──", opciones:[
+    { id:"sec", etiqueta:"Matrícula en secundaria (%)", esDual:false,
+      series:[{clave:"sec",sufijo:"",sep:"_",años:["17","18","19","20","21","22","23","24"],etiqueta:"Secundaria matriculada (%)",color:"#1A6BB5",fmtY:v=>v.toFixed(1)+"%"}],
+      nota:"Porcentaje de personas entre 12 y 16 años matriculadas en educación secundaria. Fuente: MINEDU · Elaboración propia.",
+      minY:0,maxY:100,
+    },
+    { id:"añoseduc", etiqueta:"Años de educación promedio", esDual:false,
+      series:[{clave:"añoseduc",sufijo:"",sep:"_",años:["17","18","19","20","21","22","23","24"],etiqueta:"Años de educación",color:"#7B5EA7",fmtY:v=>v.toFixed(1)}],
+      nota:"Promedio de años de educación formal de la población adulta. Fuente: PNUD · Elaboración propia.",
+    },
+    { id:"colegios3sb", etiqueta:"Colegios con 3 servicios básicos (%)", esDual:false,
+      series:[{clave:"colegios3sb_",sufijo:"",sep:"",años:["17","18","19","20","21","22","23","24","25"],etiqueta:"Colegios 3SB (%)",color:"#1A6BB5",fmtY:v=>v.toFixed(1)+"%",rawKey:true}],
+      nota:"Porcentaje de colegios con agua, desagüe y electricidad. Línea punteada = sin datos ese año. Fuente: MINEDU · Elaboración propia.",
+      minY:0,maxY:100,
+    },
+  ]},
+  { grupo:"── Salud ──", opciones:[
+    { id:"espvida", etiqueta:"Esperanza de vida (años)", esDual:false,
+      series:[{clave:"espvida",sufijo:"",sep:"_",años:["17","18","19","20","21","22","23","24"],etiqueta:"Esperanza de vida",color:"#2A7D4F",fmtY:v=>v.toFixed(1)}],
+      nota:"Esperanza de vida al nacer en años. Fuente: PNUD · Elaboración propia.",
+    },
+    { id:"med", etiqueta:"Médicos por 100,000 habitantes", esDual:false,
+      series:[{clave:"med",sufijo:"",sep:"_",años:["17","18","19","20","21","22","23","24"],etiqueta:"Médicos / 100k hab.",color:"#C04A4A",fmtY:v=>v.toFixed(1)}],
+      nota:"Número de médicos por cada 100,000 habitantes. Fuente: MINSA · Elaboración propia.",
+    },
+  ]},
+  { grupo:"── Economía ──", opciones:[
+    { id:"ingrealpc", etiqueta:"Ingreso real per cápita (S/)", esDual:false,
+      series:[{clave:"ingrealpc",sufijo:"",sep:"_",años:["17","18","19","20","21","22","23","24"],etiqueta:"Ingreso real per cápita",color:"#C0932A",fmtY:v=>"S/ "+v.toFixed(0)}],
+      nota:"Ingreso real per cápita en soles constantes. Fuente: PNUD · Elaboración propia.",
+    },
+  ]},
+  { grupo:"── Estado ──", opciones:[
+    { id:"ide", etiqueta:"Índice de Densidad del Estado (IDE)", esDual:false,
+      series:[{clave:"ide",sufijo:"",sep:"_",años:["17","18","19","20","21","22","23","24"],etiqueta:"IDE",color:"#C04A4A",fmtY:v=>v.toFixed(3)}],
+      nota:"Mide la presencia del Estado en salud, educación, identidad, saneamiento y electrificación (0–1). Fuente: PNUD-DGSE · Elaboración propia.",
+    },
+  ]},
+];
+</script>
+<style>
+:root{--fp:#E8620A;--jp:#2A7D4F;--bg:#0E0E0F;--bg2:#161618;--bg3:#1E1E21;--bg4:#262629;--border:rgba(255,255,255,0.07);--text:#F0EDE8;--text2:#9A9690;--text3:#5A5654;--r:8px}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6;min-height:100vh;overflow-x:hidden}
+#loading-screen{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;transition:opacity .5s,visibility .5s}
+#loading-screen.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.load-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,5vw,3rem);text-align:center;line-height:1.1}
+.load-logo em{color:var(--fp);font-style:normal}
+.load-sub{color:var(--text3);font-size:13px}
+.spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--fp);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-error{color:#C04A4A;font-size:13px;text-align:center;max-width:380px;display:none;line-height:1.7}
+.load-error a{color:var(--fp);cursor:pointer}
+header{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;background:rgba(14,14,15,.92);backdrop-filter:blur(12px)}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:13px;letter-spacing:.15em;text-transform:uppercase;color:var(--text3)}
+.logo em{color:var(--fp);font-style:normal}
+.hero{padding:2.5rem 2rem 2rem;border-bottom:1px solid var(--border)}
+.hero-eyebrow{font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);margin-bottom:.5rem}
+.hero-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.1;margin-bottom:.3rem}
+.hero-title em{color:var(--fp);font-style:normal}
+.hero-sub{color:var(--text2);font-size:13px;margin-bottom:2rem}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.85rem}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem 1.4rem}
+.kpi-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem}
+.kpi-value{font-family:'Syne',sans-serif;font-weight:700;font-size:1.6rem;line-height:1}
+.kpi-sub{font-size:11px;color:var(--text2);margin-top:.2rem}
+.kpi.fp .kpi-value{color:var(--fp)}.kpi.jp .kpi-value{color:var(--jp)}
+.filters{padding:1.25rem 2rem;border-bottom:1px solid var(--border);display:flex;gap:.85rem;flex-wrap:wrap;align-items:flex-end}
+.filter-group{display:flex;flex-direction:column;gap:.25rem}
+.filter-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+select,input[type=text]{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:.4rem .75rem;border-radius:6px;outline:none;transition:border-color .2s;appearance:none}
+select{padding-right:1.8rem;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235A5654'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .6rem center}
+select:focus,input:focus{border-color:var(--fp)}
+select:disabled{opacity:.35;cursor:not-allowed}
+.search-wrap{position:relative}
+.search-wrap input{padding-left:1.8rem;width:200px}
+.search-icon{position:absolute;left:.55rem;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none}
+.text-btn{background:none;border:1px solid var(--border);color:var(--text3);font-family:'DM Sans',sans-serif;font-size:12px;padding:.4rem .9rem;border-radius:6px;cursor:pointer;transition:all .2s;align-self:flex-end}
+.text-btn:hover{border-color:var(--fp);color:var(--fp)}
+.tabs{display:flex;border-bottom:1px solid var(--border);padding:0 2rem}
+.tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:.7rem 1.2rem;cursor:pointer;transition:color .2s,border-color .2s;margin-bottom:-1px}
+.tab:hover{color:var(--text2)}.tab.active{color:var(--fp);border-bottom-color:var(--fp)}
+.main{padding:1.75rem 2rem;display:grid;gap:1.4rem}
+.section-label{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:.85rem}
+.full-bar-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.4rem}
+.fbc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem;font-size:12px;color:var(--text2)}
+.fbc-header span{font-size:11px;color:var(--text3)}
+.full-bar{height:34px;border-radius:5px;overflow:hidden;display:flex;width:100%}
+.fb-seg{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:white;white-space:nowrap;overflow:hidden;transition:width .5s ease;min-width:0}
+.fb-seg span{padding:0 5px;overflow:hidden;text-overflow:ellipsis}
+.full-bar-legend{display:flex;flex-wrap:wrap;gap:.5rem 1.2rem;margin-top:.85rem}
+.fbl-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2)}
+.fbl-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+@media(max-width:680px){.charts-row{grid-template-columns:1fr}}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.4rem}
+.chart-card canvas{max-height:260px}
+.did-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.4rem}
+.did-box h3{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--text2);margin-bottom:.85rem}
+.did-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.85rem}
+.did-item{background:var(--bg3);border-radius:6px;padding:.85rem 1rem}
+.did-item-label{font-size:11px;color:var(--text3);margin-bottom:.25rem}
+.did-item-value{font-family:'Syne',sans-serif;font-weight:700;font-size:1.15rem;line-height:1.2}
+.did-item-sub{font-size:11px;color:var(--text2);margin-top:.15rem}
+.ind-section{margin-top:1rem}
+.ind-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:.75rem;margin-top:.6rem}
+.ind-card{background:var(--bg3);border-radius:6px;padding:.85rem 1rem;border-left:3px solid}
+.ind-label{font-size:11px;color:var(--text3);margin-bottom:.2rem}
+.ind-value{font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem}
+.chart-section{margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border)}
+.chart-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;gap:.75rem;flex-wrap:wrap}
+.chart-section-title{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)}
+.chart-canvas-wrap{background:var(--bg3);border-radius:6px;padding:1rem}
+.chart-nota{font-size:11px;color:var(--text3);line-height:1.6;margin-top:.6rem}
+.chart-nota strong{color:var(--text2)}
+.no-data-msg{font-size:12px;color:var(--text3);padding:.5rem 0;font-style:italic}
+.explorador-select{background:var(--bg4);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:.35rem .7rem;border-radius:5px;outline:none;appearance:none;padding-right:1.6rem;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235A5654'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .5rem center;cursor:pointer;min-width:200px}
+.explorador-select:focus{border-color:var(--fp)}
+.table-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead tr{border-bottom:1px solid var(--border)}
+th{padding:.7rem 1rem;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);text-align:left;white-space:nowrap;font-weight:500;cursor:pointer;user-select:none}
+th:hover{color:var(--text2)}th.sorted{color:var(--fp)}
+td{padding:.65rem 1rem;font-size:13px;border-bottom:1px solid rgba(255,255,255,.03);white-space:nowrap}
+tr:last-child td{border-bottom:none}tr:hover td{background:var(--bg3)}
+.t-rank{color:var(--text3);font-size:12px;width:32px}
+.t-name{font-weight:500;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.t-sub{font-size:11px;color:var(--text3);max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.t-num{font-family:'Syne',sans-serif;font-weight:600;font-size:13px}
+.mini-bar{height:5px;width:100px;border-radius:3px;background:var(--bg4)}
+.mini-fill{height:100%;border-radius:3px}
+.badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500}
+.dist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:.9rem}
+.dist-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.15rem;transition:border-color .2s}
+.dist-card:hover{border-color:rgba(232,98,10,.25)}
+.dc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.7rem}
+.dc-loc{font-weight:500;font-size:13px;line-height:1.3}
+.dc-loc small{display:block;color:var(--text3);font-size:11px;font-weight:400}
+.dc-winner{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0}
+.dc-bar{height:5px;border-radius:3px;background:var(--bg4);margin-bottom:.5rem;overflow:hidden;display:flex}
+.dc-bar-fp{background:var(--fp)}.dc-bar-jp{background:var(--jp)}
+.dc-stats{display:flex;flex-wrap:wrap;gap:.5rem;font-size:11px;color:var(--text3)}
+.dc-stat{display:flex;align-items:center;gap:3px}
+.dc-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.dc-inds{margin-top:.75rem;padding-top:.65rem;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:.35rem .75rem}
+.dc-ind{font-size:11px}.dc-ind-label{color:var(--text3)}.dc-ind-val{font-weight:500}
+.pagination{display:flex;align-items:center;gap:.5rem;padding:.85rem 1.4rem;border-top:1px solid var(--border);justify-content:flex-end}
+.page-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:12px;padding:.3rem .7rem;border-radius:5px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+.page-btn:hover:not(:disabled){border-color:var(--fp);color:var(--fp)}.page-btn:disabled{opacity:.3;cursor:not-allowed}
+.page-info{font-size:12px;color:var(--text3)}
+.empty{text-align:center;padding:3rem 2rem;color:var(--text3);grid-column:1/-1}
+footer{border-top:1px solid var(--border);padding:1.25rem 2rem;display:flex;justify-content:space-between;color:var(--text3);font-size:12px}
+.fade-in{animation:fadeIn .35s ease forwards}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+</style>
+</head>
+<body>
+<div id="loading-screen">
+  <div class="load-logo">Resultados<br><em>2026</em></div>
+  <div class="spinner" id="spinner"></div>
+  <div class="load-sub" id="load-sub">Cargando datos…</div>
+  <div class="load-error" id="load-error">
+    No se pudo cargar <strong id="err-file"></strong>.<br>
+    Verifica que el archivo esté en la raíz del repositorio con ese nombre exacto.<br>
+    <a onclick="location.reload()">↩ Reintentar</a>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <header>
+    <div class="logo">Perú · <em>2026</em></div>
+    <div style="font-size:12px;color:var(--text3)" id="header-meta"></div>
+  </header>
+  <div class="hero">
+    <div class="hero-eyebrow">Elecciones Generales · ONPE</div>
+    <h1 class="hero-title">Resultados<br><em>2026</em></h1>
+    <p class="hero-sub" id="hero-sub"></p>
+    <div class="kpi-grid" id="kpi-grid"></div>
+  </div>
+  <div class="filters">
+    <div class="filter-group">
+      <span class="filter-label">Departamento</span>
+      <select id="f-depto"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Provincia</span>
+      <select id="f-prov"><option value="">Todas</option></select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Distrito</span>
+      <select id="f-dist"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Buscar</span>
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="f-search" placeholder="Candidato o partido…">
+      </div>
+    </div>
+    <button class="text-btn" onclick="resetFilters()">Limpiar</button>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('resumen',this)">Resumen</button>
+    <button class="tab" onclick="switchTab('ranking',this)">Todos los candidatos</button>
+    <button class="tab" onclick="switchTab('distritos',this)">Por distrito</button>
+  </div>
+
+  <div id="tab-resumen">
+    <div class="main">
+      <div class="full-bar-card fade-in">
+        <div class="fbc-header">
+          <span>Distribución del total de votos emitidos (100%)</span>
+          <span id="total-emitidos-lbl"></span>
+        </div>
+        <div class="full-bar" id="full-bar"></div>
+        <div class="full-bar-legend" id="full-bar-legend"></div>
+      </div>
+      <div class="charts-row fade-in">
+        <div class="chart-card">
+          <div class="section-label">Votos válidos por partido</div>
+          <canvas id="chart-pie"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="section-label">Top 5 candidatos</div>
+          <canvas id="chart-bar"></canvas>
+        </div>
+      </div>
+      <div class="did-box fade-in" id="did-box" style="display:none">
+        <h3 id="did-title"></h3>
+        <div class="did-grid" id="did-grid"></div>
+        <div class="ind-section" id="ind-section" style="display:none">
+          <div class="section-label" style="margin-top:1rem">Indicadores socioeconómicos</div>
+          <div class="ind-grid" id="ind-grid"></div>
+        </div>
+        <!-- Gráfico 1: IDH simple -->
+        <div class="chart-section" id="idh-section" style="display:none">
+          <div class="section-label">IDH 2017–2024</div>
+          <div class="chart-canvas-wrap"><canvas id="chart-idh" height="110"></canvas></div>
+          <p class="chart-nota">El <strong>Índice de Desarrollo Humano (IDH)</strong> combina salud (esperanza de vida al nacer), educación (años de escolaridad) e ingresos (INB per cápita). Escala 0–1.<br><span style="display:block;margin-top:3px">Fuente: PNUD · Elaboración propia</span></p>
+        </div>
+        <!-- Gráfico 2: IDH vs IDE -->
+        <div class="chart-section" id="idh-ide-section" style="display:none">
+          <div class="chart-section-header">
+            <div class="chart-section-title">IDH vs. Índice de Densidad del Estado 2017–2024</div>
+          </div>
+          <div class="chart-canvas-wrap"><canvas id="chart-idh-ide" height="120"></canvas></div>
+          <p class="chart-nota">El <strong>IDH</strong> mide desarrollo humano (0–1). El <strong>IDE</strong> mide presencia del Estado en salud, educación, identidad, saneamiento y electrificación (0–1). Comparar ambos revela si mayor presencia estatal se asocia con mayor desarrollo en el territorio.<br><span style="display:block;margin-top:3px">Fuente: PNUD / PNUD-DGSE · Elaboración propia</span></p>
+        </div>
+        <!-- Gráfico 3: Explorador -->
+        <div class="chart-section" id="explorador-section" style="display:none">
+          <div class="chart-section-header">
+            <div class="chart-section-title" id="explorador-titulo">Explorador de variables</div>
+            <select class="explorador-select" id="explorador-select" onchange="renderExplorador()"></select>
+          </div>
+          <div class="chart-canvas-wrap"><canvas id="chart-explorador" height="110"></canvas></div>
+          <div class="no-data-msg" id="explorador-nodata" style="display:none">Sin datos disponibles para este distrito en esta variable.</div>
+          <p class="chart-nota" id="explorador-nota"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-ranking" style="display:none">
+    <div class="main">
+      <div class="table-card fade-in">
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th class="t-rank">#</th>
+              <th onclick="sortBy('candidato')">Candidato</th>
+              <th onclick="sortBy('partido')">Partido</th>
+              <th onclick="sortBy('votos')" class="sorted">Votos ↓</th>
+              <th onclick="sortBy('pct_validos')">% válidos</th>
+              <th style="width:110px"></th>
+              <th>Nivel</th>
+            </tr></thead>
+            <tbody id="ranking-body"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <button class="page-btn" id="r-prev" onclick="rankPage(-1)" disabled>← Anterior</button>
+          <span class="page-info" id="r-info"></span>
+          <button class="page-btn" id="r-next" onclick="rankPage(1)">Siguiente →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-distritos" style="display:none">
+    <div class="main">
+      <div class="dist-grid fade-in" id="dist-grid"></div>
+      <div class="pagination">
+        <button class="page-btn" id="d-prev" onclick="distPage(-1)" disabled>← Anterior</button>
+        <span class="page-info" id="d-info"></span>
+        <button class="page-btn" id="d-next" onclick="distPage(1)">Siguiente →</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span id="footer-src"></span>
+    <span style="display:flex;align-items:center;gap:6px">
+      Elaborado por Matias Buendia
+      <a href="https://www.linkedin.com/in/matiasbuendia/" target="_blank" title="Ver perfil en LinkedIn"
+         style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:3px;background:#0A66C2;text-decoration:none;font-size:11px;font-weight:700;color:white;font-family:sans-serif;line-height:1">in</a>
+    </span>
+    <span id="footer-rows"></span>
+  </footer>
+</div>
+
+<script>
+let ALL=[],FILTERED=[];
+let rankP=0,distP=0,sortCol='votos',sortDir=-1,curTab='resumen';
+let pieChart,barChart;
+const fmtN=n=>(n||0).toLocaleString('es-PE');
+const fmtP=n=>(n||0).toFixed(1)+'%';
+
+function pColor(p){
+  const u=(p||'').toUpperCase();
+  for(const [k,c] of Object.entries(CONFIG.coloresPartidos)) if(u.includes(k)) return c;
+  return '#4A5568';
+}
+
+// Obtener valor de una serie dado su definición y el sufijo de año
+function getVal(row,serie,añoSufijo){
+  if(serie.rawKey){
+    // clave ya es el prefijo completo ej: "colegios3sb_"
+    const v=parseFloat(row[serie.clave+añoSufijo]);
+    return(!v||isNaN(v))?null:v;
+  }
+  // clave+sufijo+sep+año  ej: "idh"+"20"+""+17 -> "idh2017"  o  "ide"+""+""+"_17" -> nope
+  // usamos: clave + sufijo + añoSufijo  o  clave + sep + añoSufijo
+  const k1=serie.clave+serie.sufijo+añoSufijo;
+  const k2=serie.clave+serie.sep+añoSufijo;
+  const v1=parseFloat(row[k1]);
+  const v2=parseFloat(row[k2]);
+  if(v1&&!isNaN(v1)) return v1;
+  if(v2&&!isNaN(v2)) return v2;
+  return null;
+}
+
+function normalize(r){
+  const g=(...ks)=>{for(const k of ks)if(r[k]!==undefined&&r[k]!==null&&r[k]!=='')return r[k];return ''};
+  const row={
+    nivel:g('nivel','Nivel'),ubigeo:g('ubigeo_onpe','ubigeo','Ubigeo'),
+    departamento:g('departamento','Departamento'),provincia:g('provincia','Provincia'),
+    distrito:g('distrito','Distrito'),tipo:g('tipo','Tipo'),
+    candidato:g('candidato','Candidato'),partido:g('partido','Partido'),
+    votos:parseInt(g('votos','Votos'))||0,
+    pct_validos:parseFloat(g('pct_validos','pct validos'))||0,
+    pct_emitidos:parseFloat(g('pct_emitidos','pct emitidos'))||0,
+  };
+  // IDH serie 2017-2024
+  ['17','18','19','20','21','22','23','24'].forEach(a=>{
+    row['idh20'+a]=parseFloat(g('idh20'+a))||null;
+  });
+  // Colegios 3SB 2017-2025
+  ['17','18','19','20','21','22','23','24','25'].forEach(a=>{
+    row['colegios3sb_'+a]=parseFloat(g('colegios3sb_'+a))||null;
+  });
+  // Variables con sufijo _YY
+  ['sec','med','ide','espvida','añoseduc','ingrealpc'].forEach(clave=>{
+    ['17','18','19','20','21','22','23','24'].forEach(a=>{
+      const v=parseFloat(g(clave+'_'+a));
+      row[clave+'_'+a]=(!v||isNaN(v))?null:v;
+    });
+  });
+  CONFIG.indicadoresDistrito.forEach(ind=>{row[ind.clave]=parseFloat(g(ind.clave))||null});
+  return row;
+}
+
+function setOpts(id,vals,def='Todos'){
+  const el=document.getElementById(id),cur=el.value;
+  el.innerHTML=`<option value="">${def}</option>`+vals.map(v=>`<option value="${v}">${v}</option>`).join('');
+  if(vals.includes(cur)) el.value=cur;
+}
+
+async function loadData(){
+  const file=CONFIG.archivoExcel;
+  document.getElementById('load-sub').textContent=`Cargando ${file}…`;
+  try{
+    const resp=await fetch(`https://raw.githubusercontent.com/matiasbuendia08/resultados_electorales_2026/main/${file}`);
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const buf=await resp.arrayBuffer();
+    const wb=XLSX.read(buf,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
+    initApp(raw,file);
+  }catch(e){
+    document.getElementById('spinner').style.display='none';
+    document.getElementById('load-sub').style.display='none';
+    document.getElementById('err-file').textContent=file;
+    document.getElementById('load-error').style.display='block';
+    console.error(e);
+  }
+}
+
+function initApp(raw,filename){
+  ALL=raw.map(normalize);FILTERED=[...ALL];
+  const deptos=[...new Set(ALL.map(r=>r.departamento).filter(v=>v&&v!=='—'))].sort();
+  setOpts('f-depto',deptos);
+  // Poblar explorador
+  const sel=document.getElementById('explorador-select');
+  sel.innerHTML='';
+  VARIABLES.forEach(g=>{
+    const og=document.createElement('optgroup');og.label=g.grupo;
+    g.opciones.forEach(op=>{const o=document.createElement('option');o.value=op.id;o.textContent=op.etiqueta;og.appendChild(o);});
+    sel.appendChild(og);
+  });
+  document.getElementById('hero-sub').textContent=CONFIG.subtitulo;
+  document.getElementById('footer-src').textContent=CONFIG.fuente;
+  document.getElementById('header-meta').textContent='';
+  document.getElementById('footer-rows').textContent='';
+  render();
+  document.getElementById('loading-screen').classList.add('hidden');
+  document.getElementById('app').style.display='block';
+}
+
+function applyFilters(){
+  const depto=document.getElementById('f-depto').value;
+  const prov=document.getElementById('f-prov').value;
+  const dist=document.getElementById('f-dist').value;
+  const q=document.getElementById('f-search').value.toLowerCase().trim();
+  FILTERED=ALL.filter(r=>
+    (!depto||r.departamento===depto)&&(!prov||r.provincia===prov)&&
+    (!dist||r.distrito===dist)&&
+    (!q||r.candidato.toLowerCase().includes(q)||r.partido.toLowerCase().includes(q))
+  );
+  rankP=0;distP=0;render();
+}
+
+function resetFilters(){
+  ['f-depto','f-prov','f-dist','f-search'].forEach(id=>document.getElementById(id).value='');
+  setOpts('f-prov',[],'Todas');setOpts('f-dist',[],'Todos');
+  FILTERED=[...ALL];rankP=0;distP=0;render();
+}
+
+document.getElementById('f-search').addEventListener('input',applyFilters);
+document.getElementById('f-depto').addEventListener('change',()=>{
+  const depto=document.getElementById('f-depto').value;
+  const esPeru=depto==='PERÚ';
+  document.getElementById('f-prov').disabled=esPeru;
+  document.getElementById('f-dist').disabled=esPeru;
+  if(esPeru){setOpts('f-prov',[],'Todas');setOpts('f-dist',[],'Todos');}
+  else{
+    const provs=[...new Set(ALL.filter(r=>!depto||r.departamento===depto).map(r=>r.provincia).filter(v=>v&&v!=='—'))].sort();
+    setOpts('f-prov',provs,'Todas');setOpts('f-dist',[],'Todos');
+  }
+  applyFilters();
+});
+document.getElementById('f-prov').addEventListener('change',()=>{
+  const depto=document.getElementById('f-depto').value,prov=document.getElementById('f-prov').value;
+  const dists=[...new Set(ALL.filter(r=>(!depto||r.departamento===depto)&&(!prov||r.provincia===prov)).map(r=>r.distrito).filter(v=>v&&v!=='—'))].sort();
+  setOpts('f-dist',dists,'Todos');applyFilters();
+});
+document.getElementById('f-dist').addEventListener('change',applyFilters);
+
+function switchTab(tab,btn){
+  curTab=tab;
+  ['resumen','ranking','distritos'].forEach(t=>document.getElementById('tab-'+t).style.display=t===tab?'':'none');
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');render();
+}
+
+function render(){
+  renderKPIs();
+  if(curTab==='resumen'){renderFullBar();renderCharts();renderDidactic();}
+  if(curTab==='ranking') renderRanking();
+  if(curTab==='distritos') renderDistritos();
+}
+
+function renderKPIs(){
+  const cands=FILTERED.filter(r=>r.tipo==='CANDIDATO');
+  const blancos=FILTERED.filter(r=>r.tipo==='VOTO EN BLANCO').reduce((s,r)=>s+r.votos,0);
+  const nulos=FILTERED.filter(r=>r.tipo==='VOTO NULO').reduce((s,r)=>s+r.votos,0);
+  const total=cands.reduce((s,r)=>s+r.votos,0);
+  const p1V=cands.filter(r=>r.partido.includes(CONFIG.partido1.nombre)).reduce((s,r)=>s+r.votos,0);
+  const p2V=cands.filter(r=>r.partido.includes(CONFIG.partido2.nombre)).reduce((s,r)=>s+r.votos,0);
+  document.getElementById('kpi-grid').innerHTML=`
+    <div class="kpi fp"><div class="kpi-label">${CONFIG.partido1.etiqueta}</div><div class="kpi-value">${total?(p1V/total*100).toFixed(1):'—'}%</div><div class="kpi-sub">${fmtN(p1V)} votos válidos</div></div>
+    <div class="kpi jp"><div class="kpi-label">${CONFIG.partido2.etiqueta}</div><div class="kpi-value">${total?(p2V/total*100).toFixed(1):'—'}%</div><div class="kpi-sub">${fmtN(p2V)} votos válidos</div></div>
+    <div class="kpi"><div class="kpi-label">Total votos válidos</div><div class="kpi-value">${(total/1e6).toFixed(2)}M</div><div class="kpi-sub">${fmtN(total)} votos</div></div>
+    <div class="kpi"><div class="kpi-label">Blancos + Nulos</div><div class="kpi-value" style="color:var(--text2)">${fmtN(blancos+nulos)}</div><div class="kpi-sub">${fmtN(blancos)} blancos · ${fmtN(nulos)} nulos</div></div>`;
+}
+
+function renderFullBar(){
+  const cands=FILTERED.filter(r=>r.tipo==='CANDIDATO');
+  const blancos=FILTERED.filter(r=>r.tipo==='VOTO EN BLANCO').reduce((s,r)=>s+r.votos,0);
+  const nulos=FILTERED.filter(r=>r.tipo==='VOTO NULO').reduce((s,r)=>s+r.votos,0);
+  const byP={};cands.forEach(r=>{byP[r.partido]=(byP[r.partido]||0)+r.votos});
+  const sorted=Object.entries(byP).sort((a,b)=>b[1]-a[1]);
+  const top5=sorted.slice(0,5),rest=sorted.slice(5).reduce((s,e)=>s+e[1],0);
+  const segs=[...top5.map(([p,v])=>({label:p.length>20?p.slice(0,18)+'…':p,votos:v,color:pColor(p)}))];
+  if(rest>0) segs.push({label:'Otros',votos:rest,color:'#3A3A3A'});
+  segs.push({label:'Blancos',votos:blancos,color:'#C8B89A'},{label:'Nulos',votos:nulos,color:'#5A5A5A'});
+  const total=segs.reduce((s,sg)=>s+sg.votos,0)||1;
+  document.getElementById('total-emitidos-lbl').textContent=fmtN(total)+' votos emitidos';
+  document.getElementById('full-bar').innerHTML=segs.map(sg=>{
+    const w=(sg.votos/total*100).toFixed(2),pct=(sg.votos/total*100).toFixed(1);
+    return `<div class="fb-seg" style="width:${w}%;background:${sg.color}">${parseFloat(w)>5?`<span>${pct}%</span>`:''}</div>`;
+  }).join('');
+  document.getElementById('full-bar-legend').innerHTML=segs.map(sg=>`<div class="fbl-item"><span class="fbl-dot" style="background:${sg.color}"></span>${sg.label} ${(sg.votos/total*100).toFixed(1)}%</div>`).join('');
+}
+
+function renderCharts(){
+  const cands=FILTERED.filter(r=>r.tipo==='CANDIDATO');
+  const byP={};cands.forEach(r=>{byP[r.partido]=(byP[r.partido]||0)+r.votos});
+  const sorted=Object.entries(byP).sort((a,b)=>b[1]-a[1]);
+  const top5=sorted.slice(0,5),rest=sorted.slice(5).reduce((s,e)=>s+e[1],0);
+  const pL=top5.map(e=>e[0].length>18?e[0].slice(0,18)+'…':e[0]);
+  const pD=top5.map(e=>e[1]),pC=top5.map(e=>pColor(e[0]));
+  if(rest>0){pL.push('Otros');pD.push(rest);pC.push('#3A3A3A')}
+  if(pieChart) pieChart.destroy();
+  pieChart=new Chart(document.getElementById('chart-pie'),{type:'doughnut',data:{labels:pL,datasets:[{data:pD,backgroundColor:pC,borderWidth:0,hoverOffset:5}]},options:{cutout:'58%',plugins:{legend:{position:'bottom',labels:{color:'#9A9690',font:{size:11},boxWidth:10,padding:8}}}}});
+  if(barChart) barChart.destroy();
+  barChart=new Chart(document.getElementById('chart-bar'),{type:'bar',data:{labels:top5.map(e=>e[0].length>22?e[0].slice(0,22)+'…':e[0]),datasets:[{data:top5.map(e=>e[1]),backgroundColor:top5.map(e=>pColor(e[0])),borderRadius:3,borderSkipped:false}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#5A5654',font:{size:11},callback:v=>(v/1e6).toFixed(1)+'M'},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'transparent'}},y:{ticks:{color:'#9A9690',font:{size:11}},grid:{display:false},border:{color:'transparent'}}}}});
+}
+
+function mkLine(canvasId,labels,datasets,yExtra,chartExtra){
+  const old=window['_ch_'+canvasId];if(old) old.destroy();
+  const ch=new Chart(document.getElementById(canvasId),{type:'line',data:{labels,datasets},options:{plugins:{legend:{display:datasets.length>1,labels:{color:'#9A9690',font:{size:11},boxWidth:10,padding:8}}},...(chartExtra||{}),scales:{x:{ticks:{color:'#5A5654',font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'transparent'}},y:{ticks:{color:'#5A5654',font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'transparent'},...(yExtra||{})}}}});
+  window['_ch_'+canvasId]=ch;return ch;
+}
+
+function mkDataset(vals,color,label,fmtY){
+  return{label,data:vals,borderColor:color,backgroundColor:color+'14',borderWidth:2,pointRadius:vals.map(v=>v!==null?4:0),pointBackgroundColor:color,tension:0.3,spanGaps:true,segment:{borderDash:ctx=>(vals[ctx.p0DataIndex]===null||vals[ctx.p1DataIndex]===null)?[4,4]:[]}};
+}
+
+function renderDidactic(){
+  const dist=document.getElementById('f-dist').value;
+  const prov=document.getElementById('f-prov').value;
+  const depto=document.getElementById('f-depto').value;
+  if(!dist&&!prov&&!depto){document.getElementById('did-box').style.display='none';return;}
+
+  const cands=FILTERED.filter(r=>r.tipo==='CANDIDATO').sort((a,b)=>b.votos-a.votos);
+  const blancos=FILTERED.filter(r=>r.tipo==='VOTO EN BLANCO').reduce((s,r)=>s+r.votos,0);
+  const nulos=FILTERED.filter(r=>r.tipo==='VOTO NULO').reduce((s,r)=>s+r.votos,0);
+  const total=cands.reduce((s,r)=>s+r.votos,0);
+  const winner=cands[0];
+  document.getElementById('did-title').textContent='';
+  document.getElementById('did-grid').innerHTML=`
+    <div class="did-item"><div class="did-item-label">Candidato más votado</div><div class="did-item-value" style="font-size:.95rem;color:${pColor(winner?.partido||'')}">${winner?.candidato||'—'}</div><div class="did-item-sub">${winner?.partido||''}</div></div>
+    <div class="did-item"><div class="did-item-label">Votos del ganador</div><div class="did-item-value">${fmtN(winner?.votos||0)}</div><div class="did-item-sub">${total?fmtP(winner?.votos/total*100):'—'} de los válidos</div></div>
+    <div class="did-item"><div class="did-item-label">Total votos válidos</div><div class="did-item-value">${fmtN(total)}</div><div class="did-item-sub">${cands.length} candidatos</div></div>
+    <div class="did-item"><div class="did-item-label">Blancos + Nulos</div><div class="did-item-value">${fmtN(blancos+nulos)}</div><div class="did-item-sub">${fmtN(blancos)} blancos · ${fmtN(nulos)} nulos</div></div>`;
+
+  const row0=FILTERED[0];
+
+  // Indicadores tarjeta
+  if(CONFIG.indicadoresDistrito.length>0&&row0){
+    const items=CONFIG.indicadoresDistrito.map(ind=>{
+      const val=row0[ind.clave];
+      if(!val||isNaN(val)) return '';
+      return `<div class="ind-card" style="border-left-color:${ind.color}"><div class="ind-label">${ind.etiqueta}</div><div class="ind-value" style="color:${ind.color}">${ind.formato(val)}</div>${ind.nota?`<div style="font-size:10px;color:var(--text3);margin-top:3px">${ind.nota}</div>`:''}</div>`;
+    }).join('');
+    document.getElementById('ind-grid').innerHTML=items||'';
+    document.getElementById('ind-section').style.display=items?'':'none';
+  }
+
+  // Gráfico IDH
+  const años17_24=['17','18','19','20','21','22','23','24'];
+  const idhVals=años17_24.map(a=>row0?.['idh20'+a]||null);
+  const hasIdh=idhVals.some(v=>v!==null);
+  const idhSec=document.getElementById('idh-section');
+  if(hasIdh){
+    idhSec.style.display='';
+    mkLine('chart-idh',años17_24.map(a=>'20'+a),[mkDataset(idhVals,'#4A8A8A','IDH',v=>v.toFixed(3))],{ticks:{callback:v=>v.toFixed(3)}});
+  } else idhSec.style.display='none';
+
+  // Gráfico IDH vs IDE
+  const ideVals=años17_24.map(a=>row0?.['ide_'+a]||null);
+  const hasIde=ideVals.some(v=>v!==null);
+  const idhIdeSec=document.getElementById('idh-ide-section');
+  if(hasIdh&&hasIde){
+    idhIdeSec.style.display='';
+    mkLine('chart-idh-ide',años17_24.map(a=>'20'+a),[mkDataset(idhVals,'#4A8A8A','IDH'),mkDataset(ideVals,'#C04A4A','IDE')],{ticks:{callback:v=>v.toFixed(3)}});
+  } else idhIdeSec.style.display='none';
+
+  // Explorador
+  const hasAnyVar=VARIABLES.some(g=>g.opciones.some(op=>op.series.some(s=>s.años.some(a=>getVal(row0,s,a)!==null))));
+  const explSec=document.getElementById('explorador-section');
+  if(hasAnyVar&&row0){explSec.style.display='';renderExplorador();}
+  else explSec.style.display='none';
+
+  document.getElementById('did-box').style.display='';
+}
+
+function renderExplorador(){
+  const selVal=document.getElementById('explorador-select').value;
+  const row0=FILTERED[0];
+  if(!row0||!selVal) return;
+  let varDef=null;
+  for(const g of VARIABLES){for(const op of g.opciones){if(op.id===selVal){varDef=op;break;}}if(varDef) break;}
+  if(!varDef) return;
+
+  document.getElementById('explorador-titulo').textContent=varDef.etiqueta;
+  document.getElementById('explorador-nota').innerHTML=varDef.nota||'';
+
+  const labels=varDef.series[0].años.map(a=>'20'+a);
+  const datasets=varDef.series.map(s=>{
+    const vals=s.años.map(a=>getVal(row0,s,a));
+    return mkDataset(vals,s.color,s.etiqueta,s.fmtY);
+  });
+  const hasData=datasets.some(ds=>ds.data.some(v=>v!==null));
+  document.getElementById('explorador-nodata').style.display=hasData?'none':'';
+  document.getElementById('chart-explorador').style.display=hasData?'':'none';
+  if(!hasData) return;
+
+  const fmtY=varDef.series[0].fmtY||(v=>v.toFixed(1));
+  const yExtra={ticks:{callback:fmtY}};
+  if(varDef.minY!==undefined) yExtra.min=varDef.minY;
+  if(varDef.maxY!==undefined) yExtra.max=varDef.maxY;
+  mkLine('chart-explorador',labels,datasets,yExtra);
+}
+
+function sortBy(col){if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=-1;}rankP=0;renderRanking();}
+function rankPage(d){rankP+=d;renderRanking();}
+function renderRanking(){
+  const rows=[...FILTERED].sort((a,b)=>{const av=a[sortCol]??'',bv=b[sortCol]??'';return typeof av==='number'?(av-bv)*sortDir:String(av).localeCompare(String(bv),'es')*sortDir;});
+  const maxV=Math.max(...rows.map(r=>r.votos),1);
+  const start=rankP*CONFIG.filasPorPagina,page=rows.slice(start,start+CONFIG.filasPorPagina),total=rows.length;
+  document.getElementById('ranking-body').innerHTML=page.map((r,i)=>`<tr><td class="t-rank">${start+i+1}</td><td><div class="t-name">${r.candidato}</div><div class="t-sub">${r.departamento&&r.departamento!=='—'?r.departamento:'Nacional'}${r.provincia&&r.provincia!=='—'?' · '+r.provincia:''}</div></td><td><div class="t-sub" style="max-width:190px">${r.partido}</div></td><td class="t-num">${fmtN(r.votos)}</td><td class="t-num" style="color:var(--text2)">${r.pct_validos.toFixed(1)}%</td><td><div class="mini-bar"><div class="mini-fill" style="width:${(r.votos/maxV*100).toFixed(1)}%;background:${pColor(r.partido)}"></div></div></td><td><span class="badge" style="background:${pColor(r.partido)}22;color:${pColor(r.partido)}">${r.tipo==='VOTO EN BLANCO'?'Blanco':r.tipo==='VOTO NULO'?'Nulo':r.nivel||'—'}</span></td></tr>`).join('');
+  document.getElementById('r-info').textContent=`${start+1}–${Math.min(start+CONFIG.filasPorPagina,total)} de ${fmtN(total)}`;
+  document.getElementById('r-prev').disabled=rankP===0;
+  document.getElementById('r-next').disabled=start+CONFIG.filasPorPagina>=total;
+}
+
+function distPage(d){distP+=d;renderDistritos();}
+function renderDistritos(){
+  const map={};
+  FILTERED.forEach(r=>{if(!r.ubigeo||r.nivel==='Nacional')return;const key=String(r.ubigeo);if(!map[key])map[key]={meta:r,rows:[]};map[key].rows.push(r);});
+  const list=Object.values(map).map(({meta,rows})=>{
+    const cands=rows.filter(r=>r.tipo==='CANDIDATO').sort((a,b)=>b.votos-a.votos);
+    const total=cands.reduce((s,r)=>s+r.votos,0);
+    const p1=cands.find(r=>r.partido.includes(CONFIG.partido1.nombre));
+    const p2=cands.find(r=>r.partido.includes(CONFIG.partido2.nombre));
+    return{meta,cands,total,p1,p2,p1Pct:total?(p1?.votos||0)/total*100:0,p2Pct:total?(p2?.votos||0)/total*100:0,winner:cands[0],rows};
+  });
+  const start=distP*CONFIG.distritosPorPagina,page=list.slice(start,start+CONFIG.distritosPorPagina),total=list.length;
+  const hasInds=CONFIG.indicadoresDistrito.length>0;
+  document.getElementById('dist-grid').innerHTML=page.map(d=>{
+    const isP1=d.winner?.partido.includes(CONFIG.partido1.nombre);
+    const isP2=d.winner?.partido.includes(CONFIG.partido2.nombre);
+    const wColor=isP1?'var(--fp)':isP2?'var(--jp)':'#4A5568';
+    const wLabel=isP1?CONFIG.partido1.etiqueta.split(' ')[0]:isP2?CONFIG.partido2.etiqueta.split(' ')[0]:(d.winner?.partido||'—').slice(0,10);
+    let indsHTML='';
+    if(hasInds){
+      const items=CONFIG.indicadoresDistrito.map(ind=>{const val=d.rows[0]?.[ind.clave];if(!val||isNaN(val))return '';return `<div class="dc-ind"><span class="dc-ind-label">${ind.etiqueta}: </span><span class="dc-ind-val" style="color:${ind.color}">${ind.formato(val)}</span></div>`;}).join('');
+      if(items) indsHTML=`<div class="dc-inds">${items}</div>`;
+    }
+    return `<div class="dist-card"><div class="dc-header"><div class="dc-loc">${d.meta.distrito||d.meta.ubigeo}<small>${d.meta.departamento}${d.meta.provincia&&d.meta.provincia!=='—'?' · '+d.meta.provincia:''}</small></div><span class="dc-winner" style="background:${wColor}22;color:${wColor}">${wLabel} gana</span></div><div class="dc-bar"><div class="dc-bar-fp" style="width:${d.p1Pct.toFixed(1)}%"></div><div class="dc-bar-jp" style="width:${d.p2Pct.toFixed(1)}%"></div></div><div class="dc-stats"><span class="dc-stat"><span class="dc-dot" style="background:var(--fp)"></span>FP ${d.p1Pct.toFixed(1)}% · ${fmtN(d.p1?.votos||0)}</span><span class="dc-stat"><span class="dc-dot" style="background:var(--jp)"></span>JP ${d.p2Pct.toFixed(1)}% · ${fmtN(d.p2?.votos||0)}</span></div>${indsHTML}</div>`;
+  }).join('')||`<div class="empty">Sin distritos con los filtros actuales</div>`;
+  document.getElementById('d-info').textContent=`${start+1}–${Math.min(start+CONFIG.distritosPorPagina,total)} de ${fmtN(total)} distritos`;
+  document.getElementById('d-prev').disabled=distP===0;
+  document.getElementById('d-next').disabled=start+CONFIG.distritosPorPagina>=total;
+}
+
+window.addEventListener('DOMContentLoaded',loadData);
+</script>
+</body>
+</html>
