@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resultados Electorales Perú 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --fp: #E8620A;
+  --jp: #2A7D4F;
+  --blank: #C8B89A;
+  --null: #8A8A8A;
+  --bg: #0E0E0F;
+  --bg2: #161618;
+  --bg3: #1E1E21;
+  --bg4: #262629;
+  --border: rgba(255,255,255,0.07);
+  --text: #F0EDE8;
+  --text2: #9A9690;
+  --text3: #5A5654;
+  --accent: #E8620A;
+  --r: 8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6;min-height:100vh;overflow-x:hidden}
+
+/* UPLOAD SCREEN */
+#upload-screen{
+  position:fixed;inset:0;z-index:100;
+  background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2rem;
+  transition:opacity 0.5s,visibility 0.5s;
+}
+#upload-screen.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.upload-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:13px;letter-spacing:0.2em;color:var(--text3);text-transform:uppercase}
+.upload-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,5vw,3.5rem);text-align:center;line-height:1.1}
+.upload-title span{color:var(--fp)}
+.upload-sub{color:var(--text2);font-size:15px;text-align:center;max-width:420px}
+.upload-zone{
+  width:min(480px,90vw);
+  border:1.5px dashed var(--border);
+  border-radius:16px;
+  padding:3rem 2rem;
+  text-align:center;
+  cursor:pointer;
+  transition:border-color 0.2s,background 0.2s;
+  position:relative;
+}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--fp);background:rgba(232,98,10,0.04)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:2.5rem;margin-bottom:1rem;opacity:0.4}
+.upload-zone p{color:var(--text2);font-size:14px}
+.upload-zone strong{color:var(--text);font-weight:500}
+.upload-hint{color:var(--text3);font-size:13px;margin-top:0.5rem}
+.demo-btn{
+  background:none;border:1px solid var(--border);
+  color:var(--text2);font-family:'DM Sans',sans-serif;
+  font-size:13px;padding:0.5rem 1.2rem;border-radius:6px;
+  cursor:pointer;transition:border-color 0.2s,color 0.2s;
+}
+.demo-btn:hover{border-color:var(--fp);color:var(--fp)}
+
+/* HEADER */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.25rem 2rem;
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:50;
+  background:rgba(14,14,15,0.92);
+  backdrop-filter:blur(12px);
+}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;letter-spacing:0.15em;color:var(--text3);text-transform:uppercase}
+.logo span{color:var(--fp)}
+.header-meta{font-size:12px;color:var(--text3)}
+.reload-btn{background:none;border:1px solid var(--border);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;padding:0.35rem 0.8rem;border-radius:5px;cursor:pointer;transition:all 0.2s}
+.reload-btn:hover{border-color:var(--fp);color:var(--fp)}
+
+/* HERO STATS */
+.hero{padding:2.5rem 2rem;border-bottom:1px solid var(--border)}
+.hero-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.1;margin-bottom:0.4rem}
+.hero-sub{color:var(--text2);font-size:14px;margin-bottom:2rem}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem 1.5rem}
+.kpi-label{font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.5rem}
+.kpi-value{font-family:'Syne',sans-serif;font-weight:700;font-size:1.7rem;line-height:1}
+.kpi-sub{font-size:12px;color:var(--text2);margin-top:0.25rem}
+.kpi.fp .kpi-value{color:var(--fp)}
+.kpi.jp .kpi-value{color:var(--jp)}
+
+/* FILTERS */
+.filters{padding:1.5rem 2rem;border-bottom:1px solid var(--border);display:flex;gap:1rem;flex-wrap:wrap;align-items:center}
+.filter-group{display:flex;flex-direction:column;gap:0.3rem}
+.filter-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em}
+select,input[type=text]{
+  background:var(--bg3);border:1px solid var(--border);
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;
+  padding:0.45rem 0.8rem;border-radius:6px;
+  outline:none;transition:border-color 0.2s;
+  appearance:none;
+}
+select{padding-right:2rem;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235A5654'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.7rem center}
+select:focus,input:focus{border-color:var(--fp)}
+.search-wrap{position:relative}
+.search-wrap input{padding-left:2rem;width:220px}
+.search-icon{position:absolute;left:0.6rem;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none}
+.filter-reset{background:none;border:1px solid var(--border);color:var(--text3);font-size:12px;padding:0.45rem 0.8rem;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.2s;font-family:'DM Sans',sans-serif}
+.filter-reset:hover{border-color:var(--fp);color:var(--fp)}
+
+/* MAIN GRID */
+.main{padding:2rem;display:grid;gap:1.5rem}
+
+/* SECTION */
+.section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:1rem}
+
+/* WINNER BAR */
+.winner-bar-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem}
+.winner-bar-labels{display:flex;justify-content:space-between;margin-bottom:0.5rem;font-size:13px}
+.winner-bar-labels .fp-label{color:var(--fp);font-weight:500}
+.winner-bar-labels .jp-label{color:var(--jp);font-weight:500}
+.winner-bar{height:28px;border-radius:4px;overflow:hidden;display:flex}
+.winner-bar-fp{background:var(--fp);transition:width 0.6s ease;display:flex;align-items:center;justify-content:flex-start;padding-left:8px}
+.winner-bar-jp{background:var(--jp);flex:1;display:flex;align-items:center;justify-content:flex-end;padding-right:8px}
+.winner-bar-fp span,.winner-bar-jp span{font-size:11px;font-weight:600;color:white;white-space:nowrap}
+.winner-bar-sub{display:flex;justify-content:space-between;margin-top:0.5rem;font-size:12px;color:var(--text3)}
+
+/* CHARTS ROW */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+@media(max-width:700px){.charts-row{grid-template-columns:1fr}}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem}
+.chart-card canvas{max-height:280px}
+
+/* RANKING TABLE */
+.table-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead tr{border-bottom:1px solid var(--border)}
+th{padding:0.75rem 1rem;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);text-align:left;white-space:nowrap;font-weight:500;cursor:pointer;user-select:none}
+th:hover{color:var(--text2)}
+th.sorted{color:var(--fp)}
+td{padding:0.7rem 1rem;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.rank{color:var(--text3);font-size:12px;width:32px}
+.cand-name{font-weight:500;color:var(--text);max-width:240px;overflow:hidden;text-overflow:ellipsis}
+.cand-party{font-size:11px;color:var(--text3);max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.bar-cell{width:120px}
+.mini-bar{height:6px;border-radius:3px;background:var(--bg4)}
+.mini-bar-fill{height:100%;border-radius:3px;transition:width 0.4s}
+.badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:12px;font-weight:500}
+.badge.fp{background:rgba(232,98,10,0.15);color:var(--fp)}
+.badge.jp{background:rgba(42,125,79,0.15);color:var(--jp)}
+.badge.blank{background:rgba(200,184,154,0.15);color:var(--blank)}
+.badge.null{background:rgba(138,138,138,0.15);color:var(--null)}
+.badge.other{background:rgba(255,255,255,0.06);color:var(--text3)}
+.pct{font-family:'Syne',sans-serif;font-weight:600;font-size:13px}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;gap:0.5rem;padding:1rem 1.5rem;border-top:1px solid var(--border);justify-content:flex-end}
+.page-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:12px;padding:0.3rem 0.7rem;border-radius:5px;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif}
+.page-btn:hover:not(:disabled){border-color:var(--fp);color:var(--fp)}
+.page-btn:disabled{opacity:0.3;cursor:not-allowed}
+.page-info{font-size:12px;color:var(--text3)}
+
+/* DISTRICT BREAKDOWN */
+.breakdown-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
+.breakdown-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;transition:border-color 0.2s}
+.breakdown-card:hover{border-color:rgba(232,98,10,0.3)}
+.bc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem}
+.bc-loc{font-weight:500;font-size:13px;line-height:1.3}
+.bc-loc small{display:block;color:var(--text3);font-size:11px;font-weight:400}
+.bc-winner{font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px}
+.bc-winner.fp{background:rgba(232,98,10,0.15);color:var(--fp)}
+.bc-winner.jp{background:rgba(42,125,79,0.15);color:var(--jp)}
+.bc-bar{height:6px;border-radius:3px;background:var(--bg4);margin-bottom:0.5rem;overflow:hidden;display:flex}
+.bc-bar-fp{background:var(--fp);transition:width 0.4s}
+.bc-bar-jp{background:var(--jp);transition:width 0.4s}
+.bc-bar-rest{background:var(--bg4);flex:1}
+.bc-stats{display:flex;gap:1rem;font-size:11px;color:var(--text3)}
+.bc-stats span{display:flex;align-items:center;gap:4px}
+.bc-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* EMPTY / LOADING */
+.empty{text-align:center;padding:4rem 2rem;color:var(--text3)}
+.empty-icon{font-size:2rem;margin-bottom:1rem;opacity:0.3}
+.loading{display:flex;align-items:center;justify-content:center;gap:0.75rem;padding:3rem;color:var(--text3)}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--fp);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TABS */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 2rem}
+.tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:13px;padding:0.75rem 1.25rem;cursor:pointer;transition:all 0.2s;margin-bottom:-1px;font-weight:500}
+.tab:hover{color:var(--text2)}
+.tab.active{color:var(--fp);border-bottom-color:var(--fp)}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:1.5rem 2rem;display:flex;justify-content:space-between;align-items:center;color:var(--text3);font-size:12px}
+footer a{color:var(--text3);text-decoration:none}
+footer a:hover{color:var(--fp)}
+
+/* ANIM */
+.fade-in{animation:fadeIn 0.4s ease forwards}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+</style>
+</head>
+<body>
+
+<!-- UPLOAD SCREEN -->
+<div id="upload-screen">
+  <div class="upload-logo">Perú · Elecciones <span>2026</span></div>
+  <h1 class="upload-title">Resultados<br><span>Electorales</span></h1>
+  <p class="upload-sub">Carga tu base de datos consolidada para explorar los resultados por candidato, región, provincia y distrito.</p>
+  <div class="upload-zone" id="drop-zone">
+    <input type="file" accept=".xlsx,.xls,.csv" id="file-input">
+    <div class="upload-icon">📊</div>
+    <p><strong>Arrastra tu archivo aquí</strong></p>
+    <p class="upload-hint">Excel (.xlsx) o CSV · datos ONPE</p>
+  </div>
+  <button class="demo-btn" id="demo-btn">Cargar datos de ejemplo</button>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+
+<header>
+  <div class="logo">Perú · <span>2026</span></div>
+  <div class="header-meta" id="header-meta"></div>
+  <button class="reload-btn" onclick="resetApp()">↩ Cambiar archivo</button>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <h1 class="hero-title">Elecciones Generales<br>Perú <span style="color:var(--fp)">2026</span></h1>
+  <p class="hero-sub" id="hero-sub">Resultados al 99.98% de actas contabilizadas · ONPE</p>
+  <div class="kpi-grid" id="kpi-grid"></div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters">
+  <div class="filter-group">
+    <span class="filter-label">Nivel</span>
+    <select id="f-nivel"><option value="">Todos</option></select>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Departamento</span>
+    <select id="f-depto"><option value="">Todos</option></select>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Provincia</span>
+    <select id="f-prov"><option value="">Todas</option></select>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Candidato / Partido</span>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="f-search" placeholder="Buscar...">
+    </div>
+  </div>
+  <button class="filter-reset" onclick="resetFilters()">Limpiar filtros</button>
+  <div style="margin-left:auto;font-size:12px;color:var(--text3)" id="filter-count"></div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('resumen',this)">Resumen</button>
+  <button class="tab" onclick="switchTab('ranking',this)">Ranking candidatos</button>
+  <button class="tab" onclick="switchTab('distritos',this)">Por distrito</button>
+</div>
+
+<!-- CONTENT -->
+<div class="main" id="content-resumen">
+  <div class="winner-bar-wrap fade-in">
+    <div class="winner-bar-labels">
+      <span class="fp-label" id="fp-label-pct">FUERZA POPULAR</span>
+      <span class="jp-label" id="jp-label-pct">JUNTOS POR EL PERÚ</span>
+    </div>
+    <div class="winner-bar" id="winner-bar">
+      <div class="winner-bar-fp" id="bar-fp" style="width:50%"><span id="bar-fp-pct"></span></div>
+      <div class="winner-bar-jp" id="bar-jp"><span id="bar-jp-pct"></span></div>
+    </div>
+    <div class="winner-bar-sub">
+      <span id="bar-fp-votes"></span>
+      <span id="bar-jp-votes"></span>
+    </div>
+  </div>
+
+  <div class="charts-row fade-in">
+    <div class="chart-card">
+      <div class="section-title">Distribución de votos</div>
+      <canvas id="chart-pie"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="section-title">Top 8 candidatos</div>
+      <canvas id="chart-bar"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="main" id="content-ranking" style="display:none">
+  <div class="table-card fade-in">
+    <div class="table-scroll">
+      <table id="ranking-table">
+        <thead>
+          <tr>
+            <th class="rank">#</th>
+            <th onclick="sortTable('candidato')">Candidato</th>
+            <th onclick="sortTable('partido')">Partido</th>
+            <th onclick="sortTable('votos')" class="sorted">Votos ↓</th>
+            <th>% válidos</th>
+            <th class="bar-cell"></th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody id="ranking-body"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <button class="page-btn" id="prev-btn" onclick="changePage(-1)" disabled>← Anterior</button>
+      <span class="page-info" id="page-info"></span>
+      <button class="page-btn" id="next-btn" onclick="changePage(1)">Siguiente →</button>
+    </div>
+  </div>
+</div>
+
+<div class="main" id="content-distritos" style="display:none">
+  <div class="breakdown-grid fade-in" id="breakdown-grid"></div>
+  <div class="pagination" id="dist-pagination">
+    <button class="page-btn" id="dprev-btn" onclick="distPage(-1)" disabled>← Anterior</button>
+    <span class="page-info" id="dpage-info"></span>
+    <button class="page-btn" id="dnext-btn" onclick="distPage(1)">Siguiente →</button>
+  </div>
+</div>
+
+<footer>
+  <span>Fuente: ONPE — Resultados Electorales Perú 2026</span>
+  <span id="footer-rows"></span>
+</footer>
+
+</div><!-- /app -->
+
+<script>
+let allData = [];
+let filtered = [];
+let currentTab = 'resumen';
+let rankPage = 0, distPageN = 0;
+const PAGE = 50, DIST_PAGE = 24;
+let sortCol = 'votos', sortDir = -1;
+let pieChart, barChart;
+
+// ── PARTY COLORS ─────────────────────────────────────────────
+const COLORS = {
+  'FUERZA POPULAR': '#E8620A',
+  'JUNTOS POR EL PERÚ': '#2A7D4F',
+  'RENOVACIÓN POPULAR': '#1A6BB5',
+  'PARTIDO DEL BUEN GOBIERNO': '#C0932A',
+  'PARTIDO CÍVICO OBRAS': '#7B5EA7',
+  'AHORA NACIÓN - AN': '#C04A4A',
+  'PARTIDO PAÍS PARA TODOS': '#4A8A8A',
+  'VOTOS EN BLANCO': '#C8B89A',
+  'VOTOS NULOS': '#6A6A6A',
+};
+function partyColor(p){return COLORS[p]||'#4A5568'}
+
+function badgeClass(tipo){
+  if(!tipo) return 'other';
+  const t = tipo.toUpperCase();
+  if(t.includes('BLANCO')) return 'blank';
+  if(t.includes('NULO')) return 'null';
+  if(t.includes('CANDIDATO')) return 'other';
+  return 'other';
+}
+function partyBadge(partido){
+  const p = (partido||'').toUpperCase();
+  if(p.includes('FUERZA POPULAR')) return 'fp';
+  if(p.includes('JUNTOS')) return 'jp';
+  if(p.includes('BLANCO')) return 'blank';
+  if(p.includes('NULO')) return 'null';
+  return 'other';
+}
+
+// ── FILE HANDLING ─────────────────────────────────────────────
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag'); loadFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
+document.getElementById('demo-btn').addEventListener('click', loadDemoData);
+
+function loadFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      let data;
+      if (file.name.endsWith('.csv')) {
+        data = parseCSV(e.target.result);
+      } else {
+        const wb = XLSX.read(e.target.result, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        data = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      }
+      initApp(data, file.name);
+    } catch(err) { alert('Error al leer el archivo: ' + err.message); }
+  };
+  if (file.name.endsWith('.csv')) reader.readAsText(file, 'UTF-8');
+  else reader.readAsArrayBuffer(file);
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split('\t').map(h => h.trim());
+  return lines.slice(1).map(line => {
+    const vals = line.split('\t');
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (vals[i]||'').trim());
+    return obj;
+  });
+}
+
+function loadDemoData() {
+  // Use the sample data provided
+  const demo = DEMO_DATA;
+  initApp(demo, 'datos_demo.xlsx');
+}
+
+// ── INIT APP ──────────────────────────────────────────────────
+function initApp(data, filename) {
+  allData = data.map(r => ({
+    nivel: r.nivel || r.Nivel || '',
+    ubigeo: r.ubigeo_onpe || r.ubigeo || '',
+    departamento: r.departamento || r.Departamento || '',
+    provincia: r.provincia || r.Provincia || '',
+    distrito: r.distrito || r.Distrito || '',
+    tipo: r.tipo || r.Tipo || '',
+    candidato: r.candidato || r.Candidato || '',
+    partido: r.partido || r.Partido || '',
+    votos: parseInt(r.votos || r.Votos || 0) || 0,
+    pct_validos: parseFloat(r.pct_validos || r['pct validos'] || 0) || 0,
+    pct_emitidos: parseFloat(r.pct_emitidos || r['pct emitidos'] || 0) || 0,
+  }));
+
+  document.getElementById('header-meta').textContent = filename + ' · ' + allData.length.toLocaleString('es') + ' registros';
+  document.getElementById('footer-rows').textContent = allData.length.toLocaleString('es') + ' filas cargadas';
+
+  populateFilters();
+  filtered = [...allData];
+  renderAll();
+
+  document.getElementById('upload-screen').classList.add('hidden');
+  document.getElementById('app').style.display = 'block';
+}
+
+function resetApp() {
+  document.getElementById('upload-screen').classList.remove('hidden');
+  document.getElementById('app').style.display = 'none';
+  allData = []; filtered = [];
+  document.getElementById('file-input').value = '';
+}
+
+// ── FILTERS ───────────────────────────────────────────────────
+function populateFilters() {
+  const niveles = [...new Set(allData.map(r => r.nivel).filter(Boolean))].sort();
+  const deptos = [...new Set(allData.map(r => r.departamento).filter(v => v && v !== '—'))].sort();
+  setOptions('f-nivel', niveles);
+  setOptions('f-depto', deptos);
+}
+
+function setOptions(id, values) {
+  const sel = document.getElementById(id);
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todos</option>' + values.map(v => `<option value="${v}">${v}</option>`).join('');
+  if (values.includes(cur)) sel.value = cur;
+}
+
+document.getElementById('f-nivel').addEventListener('change', applyFilters);
+document.getElementById('f-depto').addEventListener('change', () => {
+  const depto = document.getElementById('f-depto').value;
+  const provs = [...new Set(allData.filter(r => !depto || r.departamento === depto).map(r => r.provincia).filter(v => v && v !== '—'))].sort();
+  setOptions('f-prov', provs);
+  applyFilters();
+});
+document.getElementById('f-prov').addEventListener('change', applyFilters);
+document.getElementById('f-search').addEventListener('input', applyFilters);
+
+function applyFilters() {
+  const nivel = document.getElementById('f-nivel').value;
+  const depto = document.getElementById('f-depto').value;
+  const prov  = document.getElementById('f-prov').value;
+  const q     = document.getElementById('f-search').value.toLowerCase().trim();
+
+  filtered = allData.filter(r =>
+    (!nivel || r.nivel === nivel) &&
+    (!depto || r.departamento === depto) &&
+    (!prov  || r.provincia === prov) &&
+    (!q || r.candidato.toLowerCase().includes(q) || r.partido.toLowerCase().includes(q))
+  );
+
+  rankPage = 0; distPageN = 0;
+  document.getElementById('filter-count').textContent = filtered.length.toLocaleString('es') + ' registros';
+  renderAll();
+}
+
+function resetFilters() {
+  document.getElementById('f-nivel').value = '';
+  document.getElementById('f-depto').value = '';
+  document.getElementById('f-prov').value = '';
+  document.getElementById('f-search').value = '';
+  filtered = [...allData];
+  rankPage = 0; distPageN = 0;
+  document.getElementById('filter-count').textContent = '';
+  renderAll();
+}
+
+// ── TABS ──────────────────────────────────────────────────────
+function switchTab(tab, btn) {
+  currentTab = tab;
+  ['resumen','ranking','distritos'].forEach(t => {
+    document.getElementById('content-'+t).style.display = t === tab ? '' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+}
+
+// ── RENDER ALL ────────────────────────────────────────────────
+function renderAll() {
+  renderKPIs();
+  if (currentTab === 'resumen') renderResumen();
+  if (currentTab === 'ranking') renderRanking();
+  if (currentTab === 'distritos') renderDistritos();
+}
+
+// ── KPIs ──────────────────────────────────────────────────────
+function renderKPIs() {
+  const candidates = filtered.filter(r => r.tipo === 'CANDIDATO');
+  const totVotos = candidates.reduce((s,r) => s + r.votos, 0);
+  const blancos = filtered.filter(r => r.tipo === 'VOTO EN BLANCO').reduce((s,r) => s+r.votos,0);
+  const nulos   = filtered.filter(r => r.tipo === 'VOTO NULO').reduce((s,r) => s+r.votos,0);
+
+  const fpV = candidates.filter(r => r.partido.includes('FUERZA POPULAR')).reduce((s,r)=>s+r.votos,0);
+  const jpV = candidates.filter(r => r.partido.includes('JUNTOS POR EL PERÚ')).reduce((s,r)=>s+r.votos,0);
+  const fpPct = totVotos ? (fpV/totVotos*100).toFixed(1) : 0;
+  const jpPct = totVotos ? (jpV/totVotos*100).toFixed(1) : 0;
+
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi fp">
+      <div class="kpi-label">Fuerza Popular</div>
+      <div class="kpi-value">${fpPct}%</div>
+      <div class="kpi-sub">${fpV.toLocaleString('es')} votos válidos</div>
+    </div>
+    <div class="kpi jp">
+      <div class="kpi-label">Juntos por el Perú</div>
+      <div class="kpi-value">${jpPct}%</div>
+      <div class="kpi-sub">${jpV.toLocaleString('es')} votos válidos</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Total votos candidatos</div>
+      <div class="kpi-value">${(totVotos/1e6).toFixed(2)}M</div>
+      <div class="kpi-sub">${totVotos.toLocaleString('es')} votos</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Votos en blanco</div>
+      <div class="kpi-value" style="color:var(--blank)">${blancos.toLocaleString('es')}</div>
+      <div class="kpi-sub">+ ${nulos.toLocaleString('es')} nulos</div>
+    </div>
+  `;
+
+  // winner bar
+  const fpW = fpPct / (parseFloat(fpPct) + parseFloat(jpPct)) * 100 || 50;
+  document.getElementById('bar-fp').style.width = fpW + '%';
+  document.getElementById('bar-fp-pct').textContent = fpPct + '%';
+  document.getElementById('bar-jp-pct').textContent = jpPct + '%';
+  document.getElementById('bar-fp-votes').textContent = `FP: ${fpV.toLocaleString('es')} votos`;
+  document.getElementById('bar-jp-votes').textContent = `JP: ${jpV.toLocaleString('es')} votos`;
+  document.getElementById('fp-label-pct').textContent = `FUERZA POPULAR ${fpPct}%`;
+  document.getElementById('jp-label-pct').textContent = `JUNTOS POR EL PERÚ ${jpPct}%`;
+}
+
+// ── RESUMEN CHARTS ────────────────────────────────────────────
+function renderResumen() {
+  const candidates = filtered.filter(r => r.tipo === 'CANDIDATO');
+  const byParty = {};
+  candidates.forEach(r => {
+    byParty[r.partido] = (byParty[r.partido]||0) + r.votos;
+  });
+  const blancos = filtered.filter(r => r.tipo==='VOTO EN BLANCO').reduce((s,r)=>s+r.votos,0);
+  const nulos   = filtered.filter(r => r.tipo==='VOTO NULO').reduce((s,r)=>s+r.votos,0);
+
+  const sorted = Object.entries(byParty).sort((a,b)=>b[1]-a[1]);
+  const top8 = sorted.slice(0,8);
+  const rest = sorted.slice(8).reduce((s,e)=>s+e[1],0);
+
+  // PIE
+  const pieLabels = [...top8.map(e=>e[0].length>20?e[0].slice(0,20)+'…':e[0]),'Blancos','Nulos'];
+  if(rest>0) pieLabels.push('Otros');
+  const pieData   = [...top8.map(e=>e[1]),blancos,nulos];
+  if(rest>0) pieData.push(rest);
+  const pieColors = [...top8.map(e=>partyColor(e[0])),'#C8B89A','#6A6A6A'];
+  if(rest>0) pieColors.push('#3A3A3A');
+
+  if (pieChart) pieChart.destroy();
+  pieChart = new Chart(document.getElementById('chart-pie'), {
+    type: 'doughnut',
+    data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: pieColors, borderWidth: 0, hoverOffset: 6 }] },
+    options: {
+      plugins: { legend: { position: 'bottom', labels: { color: '#9A9690', font: { size: 11 }, boxWidth: 12, padding: 10 } } },
+      cutout: '60%',
+    }
+  });
+
+  // BAR
+  if (barChart) barChart.destroy();
+  barChart = new Chart(document.getElementById('chart-bar'), {
+    type: 'bar',
+    data: {
+      labels: top8.map(e=>e[0].length>22?e[0].slice(0,22)+'…':e[0]),
+      datasets: [{ data: top8.map(e=>e[1]), backgroundColor: top8.map(e=>partyColor(e[0])), borderRadius: 4, borderSkipped: false }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#5A5654', font:{size:11}, callback: v => (v/1e6).toFixed(1)+'M' }, grid: { color: 'rgba(255,255,255,0.04)' }, border:{color:'transparent'} },
+        y: { ticks: { color: '#9A9690', font:{size:11} }, grid: { display: false }, border:{color:'transparent'} }
+      }
+    }
+  });
+}
+
+// ── RANKING TABLE ─────────────────────────────────────────────
+function sortTable(col) {
+  if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = -1; }
+  renderRanking();
+}
+
+function renderRanking() {
+  const rows = [...filtered].sort((a,b) => {
+    let av = a[sortCol]||'', bv = b[sortCol]||'';
+    if (typeof av === 'number') return (av - bv) * sortDir;
+    return av.localeCompare(bv, 'es') * sortDir;
+  });
+
+  const maxVotos = Math.max(...rows.map(r=>r.votos));
+  const start = rankPage * PAGE;
+  const page  = rows.slice(start, start + PAGE);
+
+  document.getElementById('ranking-body').innerHTML = page.map((r,i) => `
+    <tr>
+      <td class="rank">${start+i+1}</td>
+      <td>
+        <div class="cand-name">${r.candidato}</div>
+        <div class="cand-party">${r.departamento !== '—' ? r.departamento + (r.provincia!=='—'?' · '+r.provincia:'') : 'Nacional'}</div>
+      </td>
+      <td><div class="cand-party" style="max-width:180px">${r.partido}</div></td>
+      <td class="pct">${r.votos.toLocaleString('es')}</td>
+      <td class="pct" style="color:var(--text2)">${r.pct_validos.toFixed(1)}%</td>
+      <td class="bar-cell"><div class="mini-bar"><div class="mini-bar-fill" style="width:${maxVotos?r.votos/maxVotos*100:0}%;background:${partyColor(r.partido)}"></div></div></td>
+      <td><span class="badge ${partyBadge(r.partido)}">${r.tipo==='VOTO EN BLANCO'?'Blanco':r.tipo==='VOTO NULO'?'Nulo':r.partido.length>18?r.partido.slice(0,18)+'…':r.partido}</span></td>
+    </tr>
+  `).join('');
+
+  const total = rows.length;
+  document.getElementById('page-info').textContent = `${start+1}–${Math.min(start+PAGE,total)} de ${total.toLocaleString('es')}`;
+  document.getElementById('prev-btn').disabled = rankPage === 0;
+  document.getElementById('next-btn').disabled = start + PAGE >= total;
+}
+
+function changePage(d) { rankPage += d; renderRanking(); }
+
+// ── DISTRICT BREAKDOWN ────────────────────────────────────────
+function renderDistritos() {
+  const distritos = [...new Set(filtered.filter(r=>r.nivel==='Distrito'||r.distrito&&r.distrito!=='—').map(r=>r.ubigeo||r.distrito))].filter(Boolean);
+
+  const distData = distritos.map(uid => {
+    const rows = filtered.filter(r => (r.ubigeo||r.distrito) === uid);
+    if (!rows.length) return null;
+    const r0 = rows[0];
+    const candidates = rows.filter(r=>r.tipo==='CANDIDATO').sort((a,b)=>b.votos-a.votos);
+    const total = candidates.reduce((s,r)=>s+r.votos,0);
+    const fp = candidates.find(r=>r.partido.includes('FUERZA POPULAR'));
+    const jp = candidates.find(r=>r.partido.includes('JUNTOS POR EL PERÚ'));
+    const fpPct = total ? (fp?.votos||0)/total*100 : 0;
+    const jpPct = total ? (jp?.votos||0)/total*100 : 0;
+    const winner = candidates[0];
+    return { uid, depto: r0.departamento, prov: r0.provincia, dist: r0.distrito||uid, fp, jp, fpPct, jpPct, winner, total, candidates };
+  }).filter(Boolean);
+
+  const start = distPageN * DIST_PAGE;
+  const page  = distData.slice(start, start + DIST_PAGE);
+
+  document.getElementById('breakdown-grid').innerHTML = page.map(d => {
+    const wClass = d.winner?.partido.includes('FUERZA POPULAR')?'fp':d.winner?.partido.includes('JUNTOS')?'jp':'other';
+    const wLabel = d.winner?.partido.includes('FUERZA POPULAR')?'FP gana':d.winner?.partido.includes('JUNTOS')?'JP gana':(d.winner?.partido||'').slice(0,12);
+    return `
+    <div class="breakdown-card">
+      <div class="bc-header">
+        <div class="bc-loc">
+          ${d.dist}
+          <small>${d.depto}${d.prov&&d.prov!=='—'?' · '+d.prov:''}</small>
+        </div>
+        <span class="bc-winner ${wClass}">${wLabel}</span>
+      </div>
+      <div class="bc-bar">
+        <div class="bc-bar-fp" style="width:${d.fpPct.toFixed(1)}%"></div>
+        <div class="bc-bar-jp" style="width:${d.jpPct.toFixed(1)}%"></div>
+      </div>
+      <div class="bc-stats">
+        <span><span class="bc-dot" style="background:var(--fp)"></span>FP ${d.fpPct.toFixed(1)}% · ${(d.fp?.votos||0).toLocaleString('es')}</span>
+        <span><span class="bc-dot" style="background:var(--jp)"></span>JP ${d.jpPct.toFixed(1)}% · ${(d.jp?.votos||0).toLocaleString('es')}</span>
+      </div>
+    </div>`;
+  }).join('') || '<div class="empty"><div class="empty-icon">🗺</div><p>No hay distritos con los filtros actuales</p></div>';
+
+  const total = distData.length;
+  document.getElementById('dpage-info').textContent = `${start+1}–${Math.min(start+DIST_PAGE,total)} de ${total.toLocaleString('es')} distritos`;
+  document.getElementById('dprev-btn').disabled = distPageN === 0;
+  document.getElementById('dnext-btn').disabled = start + DIST_PAGE >= total;
+}
+
+function distPage(d) { distPageN += d; renderDistritos(); }
+
+// ── DEMO DATA ─────────────────────────────────────────────────
+const DEMO_DATA = [
+  {nivel:'Nacional',ubigeo_onpe:0,departamento:'PERÚ',provincia:'—',distrito:'—',tipo:'CANDIDATO',candidato:'KEIKO SOFIA FUJIMORI HIGUCHI',partido:'FUERZA POPULAR',votos:2877678,pct_validos:17,pct_emitidos:14},
+  {nivel:'Nacional',ubigeo_onpe:0,departamento:'PERÚ',provincia:'—',distrito:'—',tipo:'VOTO EN BLANCO',candidato:'VOTOS EN BLANCO',partido:'VOTOS EN BLANCO',votos:2372896,pct_validos:0,pct_emitidos:12},
+  {nivel:'Nacional',ubigeo_onpe:0,departamento:'PERÚ',provincia:'—',distrito:'—',tipo:'CANDIDATO',candidato:'ROBERTO HELBERT SANCHEZ PALOMINO',partido:'JUNTOS POR EL PERÚ',votos:2015114,pct_validos:12,pct_emitidos:10},
+  {nivel:'Nacional',ubigeo_onpe:0,departamento:'PERÚ',provincia:'—',distrito:'—',tipo:'CANDIDATO',candidato:'RAFAEL BERNARDO LÓPEZ ALIAGA CAZORLA',partido:'RENOVACIÓN POPULAR',votos:1993904,pct_validos:12,pct_emitidos:10},
+  {nivel:'Nacional',ubigeo_onpe:0,departamento:'PERÚ',provincia:'—',distrito:'—',tipo:'CANDIDATO',candidato:'JORGE NIETO MONTESINOS',partido:'PARTIDO DEL BUEN GOBIERNO',votos:1837517,pct_validos:11,pct_emitidos:9},
+  {nivel:'Nacional',ubigeo_onpe:0,departamento:'PERÚ',provincia:'—',distrito:'—',tipo:'CANDIDATO',candidato:'RICARDO PABLO BELMONT CASSINELLI',partido:'PARTIDO CÍVICO OBRAS',votos:1698903,pct_validos:10,pct_emitidos:8},
+  {nivel:'Nacional',ubigeo_onpe:0,departamento:'PERÚ',provincia:'—',distrito:'—',tipo:'VOTO NULO',candidato:'VOTOS NULOS',partido:'VOTOS NULOS',votos:1045425,pct_validos:0,pct_emitidos:5},
+  {nivel:'Distrito',ubigeo_onpe:10101,departamento:'AMAZONAS',provincia:'CHACHAPOYAS',distrito:'CHACHAPOYAS',tipo:'CANDIDATO',candidato:'KEIKO SOFIA FUJIMORI HIGUCHI',partido:'FUERZA POPULAR',votos:2395,pct_validos:18,pct_emitidos:15},
+  {nivel:'Distrito',ubigeo_onpe:10101,departamento:'AMAZONAS',provincia:'CHACHAPOYAS',distrito:'CHACHAPOYAS',tipo:'CANDIDATO',candidato:'ROBERTO HELBERT SANCHEZ PALOMINO',partido:'JUNTOS POR EL PERÚ',votos:1062,pct_validos:8,pct_emitidos:6},
+  {nivel:'Distrito',ubigeo_onpe:10101,departamento:'AMAZONAS',provincia:'CHACHAPOYAS',distrito:'CHACHAPOYAS',tipo:'VOTO EN BLANCO',candidato:'VOTOS EN BLANCO',partido:'VOTOS EN BLANCO',votos:1891,pct_validos:0,pct_emitidos:11},
+  {nivel:'Distrito',ubigeo_onpe:10101,departamento:'AMAZONAS',provincia:'CHACHAPOYAS',distrito:'CHACHAPOYAS',tipo:'VOTO NULO',candidato:'VOTOS NULOS',partido:'VOTOS NULOS',votos:1100,pct_validos:0,pct_emitidos:7},
+  {nivel:'Distrito',ubigeo_onpe:10103,departamento:'AMAZONAS',provincia:'CHACHAPOYAS',distrito:'BALSAS',tipo:'CANDIDATO',candidato:'ROBERTO HELBERT SANCHEZ PALOMINO',partido:'JUNTOS POR EL PERÚ',votos:188,pct_validos:31,pct_emitidos:24},
+  {nivel:'Distrito',ubigeo_onpe:10103,departamento:'AMAZONAS',provincia:'CHACHAPOYAS',distrito:'BALSAS',tipo:'CANDIDATO',candidato:'KEIKO SOFIA FUJIMORI HIGUCHI',partido:'FUERZA POPULAR',votos:120,pct_validos:20,pct_emitidos:15},
+  {nivel:'Distrito',ubigeo_onpe:10103,departamento:'AMAZONAS',provincia:'CHACHAPOYAS',distrito:'BALSAS',tipo:'VOTO EN BLANCO',candidato:'VOTOS EN BLANCO',partido:'VOTOS EN BLANCO',votos:137,pct_validos:0,pct_emitidos:18},
+];
+</script>
+</body>
+</html>
