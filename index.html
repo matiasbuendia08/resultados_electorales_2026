@@ -599,7 +599,10 @@ function renderDidactic(){
     document.getElementById('ind-section').style.display=items?'':'none';
   }
 
-  // Gráfico IDH vs IDE
+ // Gráfico IDH vs IDE
+  const años17_24=['17','18','19','20','21','22','23','24'];
+  const idhVals=años17_24.map(a=>row0?.['idh20'+a]||null);
+  const hasIdh=idhVals.some(v=>v!==null);
   const ideVals=años17_24.map(a=>row0?.['ide_'+a]||null);
   const hasIde=ideVals.some(v=>v!==null);
   const idhIdeSec=document.getElementById('idh-ide-section');
