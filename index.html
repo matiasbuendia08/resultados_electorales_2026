@@ -617,7 +617,7 @@ function renderDidactic() {
   const winner =cands[0];
   const geoLabel=dist||prov||depto;
 
-  document.getElementById('did-title').textContent='';
+  document.getElementById('did-title').textContent=geoLabel;
   document.getElementById('did-grid').innerHTML=`
     <div class="did-item">
       <div class="did-item-label">Candidato más votado</div>
