@@ -577,12 +577,26 @@ function renderKPIs(){
   const total=cands.reduce((s,r)=>s+r.votos,0);
   const p1V=cands.filter(r=>r.partido.includes(CONFIG.partido1.nombre)).reduce((s,r)=>s+r.votos,0);
   const p2V=cands.filter(r=>r.partido.includes(CONFIG.partido2.nombre)).reduce((s,r)=>s+r.votos,0);
+  // Contar distritos ganados
+const distMap={};
+FILTERED.forEach(r=>{
+  if(r.nivel==='Nacional'||!r.ubigeo) return;
+  const key=String(r.ubigeo);
+  if(!distMap[key]) distMap[key]={vfp:0,vjp:0};
+  if(r.partido&&r.partido.includes('FUERZA POPULAR')&&r.tipo==='CANDIDATO') distMap[key].vfp+=r.votos;
+  if(r.partido&&r.partido.includes('JUNTOS POR EL PERÚ')&&r.tipo==='CANDIDATO') distMap[key].vjp+=r.votos;
+});
+const distFP=Object.values(distMap).filter(d=>d.vfp>0&&d.vfp>d.vjp).length;
+const distJP=Object.values(distMap).filter(d=>d.vjp>0&&d.vjp>d.vfp).length;
+const distTotal=Object.values(distMap).filter(d=>d.vfp>0||d.vjp>0).length;
   document.getElementById('kpi-grid').innerHTML=`
     <div class="kpi fp"><div class="kpi-label">${CONFIG.partido1.etiqueta}</div><div class="kpi-value" id="kv-fp">—</div><div class="kpi-sub">${fmtN(p1V)} votos válidos</div></div>
     <div class="kpi jp"><div class="kpi-label">${CONFIG.partido2.etiqueta}</div><div class="kpi-value" id="kv-jp">—</div><div class="kpi-sub">${fmtN(p2V)} votos válidos</div></div>
     <div class="kpi"><div class="kpi-label">Total votos válidos</div><div class="kpi-value" id="kv-total">—</div><div class="kpi-sub">${fmtN(total)} votos</div></div>
-    <div class="kpi"><div class="kpi-label">Blancos + Nulos</div><div class="kpi-value" style="color:var(--text2)" id="kv-bn">—</div><div class="kpi-sub">${fmtN(blancos)} blancos · ${fmtN(nulos)} nulos</div></div>`;
-
+    <div class="kpi"><div class="kpi-label">Blancos + Nulos</div><div class="kpi-value" style="color:var(--text2)" id="kv-bn">—</div><div class="kpi-sub">${fmtN(blancos)} blancos · ${fmtN(nulos)} nulos</div></div>
+    <div class="kpi fp"><div class="kpi-label">Distritos ganados · FP</div><div class="kpi-value" id="kv-dfp">—</div><div class="kpi-sub">de ${fmtN(distTotal)} distritos</div></div>
+    <div class="kpi jp"><div class="kpi-label">Distritos ganados · JP</div><div class="kpi-value" id="kv-djp">—</div><div class="kpi-sub">de ${fmtN(distTotal)} distritos</div></div>`;
+  
   // Animar contadores
   function animCount(id, target, fmt, duration=800){
     const el=document.getElementById(id);
@@ -603,6 +617,8 @@ function renderKPIs(){
     animCount('kv-jp', total?(p2V/total*100):0, v=>v.toFixed(1)+'%');
     animCount('kv-total', total/1e6, v=>v.toFixed(2)+'M');
     animCount('kv-bn', blancos+nulos, v=>fmtN(Math.round(v)));
+    animCount('kv-dfp', distFP, v=>Math.round(v).toString());
+animCount('kv-djp', distJP, v=>Math.round(v).toString());
   } else {
     ['kv-fp','kv-jp','kv-total','kv-bn'].forEach(id=>{
       const el=document.getElementById(id);
