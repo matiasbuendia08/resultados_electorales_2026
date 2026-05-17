@@ -809,8 +809,7 @@ function renderAnalisis(){
       <div class="did-item"><div class="did-item-label" style="color:var(--fp)">IDH prom. · distritos FP</div><div class="did-item-value" style="color:var(--fp)">${idhFP!=null?idhFP.toFixed(3):'—'}</div><div class="did-item-sub">Índice 0–1</div></div>
       <div class="did-item"><div class="did-item-label" style="color:var(--jp)">IDH prom. · distritos JP</div><div class="did-item-value" style="color:var(--jp)">${idhJP!=null?idhJP.toFixed(3):'—'}</div><div class="did-item-sub">Índice 0–1</div></div>
     </div>
-    <p style="font-size:11px;color:var(--text3);margin-top:.85rem">Promedios ponderados por votos válidos del distrito. Pobreza: INEI 2018. IDH: PNUD 2024. Elaboración propia.</p>
-
+    <p style="font-size:11px;color:var(--text3);margin-top:.85rem">Promedios ponderados por votos válidos del distrito. Pobreza: INEI 2018. IDH: PNUD 2024. Elaboración propia.</p>`;
   // ── Bloque 2: Tabla de fortalezas ──
   const sorted=[...distritos].sort((a,b)=>{
     const av=a[analisisSortCol]??-Infinity,bv=b[analisisSortCol]??-Infinity;
