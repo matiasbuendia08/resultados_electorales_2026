@@ -472,7 +472,8 @@ async function loadData(){
     await new Promise(r=>setTimeout(r,300));
     initApp(raw,'datos.json.gz');
   }catch(e){
-    document.getElementById('spinner').style.display='none';
+    const spinner=document.getElementById('spinner');
+if(spinner) spinner.style.display='none';
     document.getElementById('load-sub').style.display='none';
     document.getElementById('err-file').textContent='datos.json.gz';
     document.getElementById('load-error').style.display='block';
