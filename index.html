@@ -352,10 +352,6 @@ body.light{--bg:#F5F4F0;--bg2:#FFFFFF;--bg3:#EDEDEA;--bg4:#E0DED9;--border:rgba(
 
   <div id="tab-analisis" style="display:none">
   <div class="main">
-    <div class="fade-in" id="analisis-gancho" style="background:linear-gradient(135deg,var(--fp)15,var(--jp)15);border:1px solid var(--border);border-radius:var(--r);padding:1.75rem 1.4rem;text-align:center">
-  <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.1rem,2.5vw,1.6rem);line-height:1.3;color:var(--text)" id="gancho-texto">
-    Cargando análisis…
-  </div>
   <div style="font-size:11px;color:var(--text3);margin-top:.6rem;letter-spacing:.08em;text-transform:uppercase">Análisis basado en resultados distritales · ONPE 2026</div>
 </div>
     <div class="full-bar-card fade-in">
@@ -899,13 +895,6 @@ const topKeikoAJP=[...keikoAJP].sort((a,b)=>
   (b.pct_jp-b.pct_fp)-(a.pct_jp-a.pct_fp)
 ).slice(0,5);
 
-  // Frase gancho dinámica
-const ganchoEl=document.getElementById('gancho-texto');
-if(ganchoEl&&conCambio.length>0){
-  const totalCastillo=conCambio.filter(d=>d.voto2021_castillo>d.voto2021_keiko).length;
-  const pctCambio=totalCastillo>0?Math.round(castilloAFP.length/totalCastillo*10):0;
-  ganchoEl.innerHTML=`De cada 10 distritos donde ganó Castillo en 2021,<br><span style="color:var(--fp);font-size:1.2em">${pctCambio} de cada 10</span> ahora los gana Fujimori`;
-}
   
 document.getElementById('analisis-cambio').innerHTML=`
   <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;line-height:1.6">
