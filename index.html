@@ -22,6 +22,7 @@ const CONFIG = {
   partido1:{nombre:"FUERZA POPULAR",etiqueta:"Fuerza Popular"},
   partido2:{nombre:"JUNTOS POR EL PERÚ",etiqueta:"Juntos por el Perú"},
   indicadoresDistrito:[
+    {clave:"pob2018_pct",etiqueta:"Pobreza monetaria 2018",formato:v=>v.toFixed(1)+"%",color:"#C04A4A",nota:"Año: 2018. Fuente: INEI – Mapa de Pobreza Provincial y Distrital 2018. Estimada como promedio del intervalo de confianza al 95%. Cálculos propios.",destacado:true},
     {clave:"idh2024",etiqueta:"IDH 2024",formato:v=>v.toFixed(3),color:"#4A8A8A",nota:"Año: 2024. Fuente: PNUD"},
     {clave:"colegios_3sb",etiqueta:"Colegios 3 SB (%)",formato:v=>v.toFixed(1)+"%",color:"#1A6BB5",nota:"Año: 2025. Fuente: MINEDU. Cálculos propios"},
     {clave:"colegios_sust",etiqueta:"Colegios en sustitución",formato:v=>v.toFixed(1)+"%",color:"#C04A4A",nota:"Año: 2017. Fuente: INEI. Cálculos propios"},
@@ -252,6 +253,7 @@ body.light{--bg:#F5F4F0;--bg2:#FFFFFF;--bg3:#EDEDEA;--bg4:#E0DED9;--border:rgba(
     <button class="tab active" onclick="switchTab('resumen',this)">Resumen</button>
     <button class="tab" onclick="switchTab('ranking',this)">Todos los candidatos</button>
     <button class="tab" onclick="switchTab('distritos',this)">Por distrito</button>
+    <button class="tab" onclick="switchTab('analisis',this)">Análisis segunda vuelta</button>
   </div>
 
   <div id="tab-resumen">
@@ -340,6 +342,37 @@ body.light{--bg:#F5F4F0;--bg2:#FFFFFF;--bg3:#EDEDEA;--bg4:#E0DED9;--border:rgba(
     </div>
   </div>
 
+  <div id="tab-analisis" style="display:none">
+  <div class="main">
+    <div class="full-bar-card fade-in">
+      <div class="fbc-header"><span>Perfil socioeconómico del voto · 2026</span></div>
+      <div id="analisis-perfil"></div>
+    </div>
+    <div class="full-bar-card fade-in">
+      <div class="fbc-header"><span>Fortalezas por distrito · FP vs JP</span><span id="analisis-count"></span></div>
+      <div class="table-scroll"><table><thead><tr>
+        <th onclick="sortAnalisis('distrito')">Distrito</th>
+        <th onclick="sortAnalisis('departamento')">Dpto.</th>
+        <th onclick="sortAnalisis('pct_fp')" class="sorted">FP %</th>
+        <th onclick="sortAnalisis('pct_jp')">JP %</th>
+        <th onclick="sortAnalisis('margen')">Margen</th>
+        <th onclick="sortAnalisis('pob2018_pct')">Pobreza 2018</th>
+        <th onclick="sortAnalisis('idh2024')">IDH 2024</th>
+        <th>Ganador</th>
+      </tr></thead><tbody id="analisis-body"></tbody></table></div>
+      <div class="pagination">
+        <button class="page-btn" id="a-prev" onclick="analisisPage(-1)" disabled>← Anterior</button>
+        <span class="page-info" id="a-info"></span>
+        <button class="page-btn" id="a-next" onclick="analisisPage(1)">Siguiente →</button>
+      </div>
+    </div>
+    <div class="full-bar-card fade-in">
+      <div class="fbc-header"><span>Cambio de voto 2021 → 2026 · Top 10 distritos</span></div>
+      <div id="analisis-cambio"></div>
+    </div>
+  </div>
+</div>
+
   <footer>
     <span id="footer-src"></span>
     <span style="display:flex;align-items:center;gap:6px">
@@ -409,7 +442,10 @@ function normalize(r){
     });
   });
   CONFIG.indicadoresDistrito.forEach(ind=>{row[ind.clave]=parseFloat(g(ind.clave))||null});
-  return row;
+row.pob2018_pct=parseFloat(g('pob2018_pct'))||null;
+row.voto2021_castillo=parseFloat(g('voto2021_castillo'))||null;
+row.voto2021_keiko=parseFloat(g('voto2021_keiko'))||null;
+return row;
 }
 
 function setOpts(id,vals,def='Todos'){
@@ -512,6 +548,7 @@ function render(){
   if(curTab==='resumen'){renderFullBar();renderCharts();renderDidactic();}
   if(curTab==='ranking') renderRanking();
   if(curTab==='distritos') renderDistritos();
+  if(curTab==='analisis') renderAnalisis();
 }
 
 function renderKPIs(){
@@ -605,7 +642,7 @@ const winner=cands[0];
     const items=CONFIG.indicadoresDistrito.map(ind=>{
       const val=row0[ind.clave];
       if(!val||isNaN(val)) return '';
-      return `<div class="ind-card" style="border-left-color:${ind.color}"><div class="ind-label">${ind.etiqueta}</div><div class="ind-value" style="color:${ind.color}">${ind.formato(val)}</div>${ind.nota?`<div style="font-size:10px;color:var(--text3);margin-top:3px">${ind.nota}</div>`:''}</div>`;
+     return `<div class="ind-card" style="border-left-color:${ind.color};${ind.destacado?'border-left-width:5px;background:'+ind.color+'18;':''}"><div class="ind-label">${ind.etiqueta}${ind.destacado?` <span style="font-size:9px;font-weight:700;letter-spacing:.08em;color:${ind.color};text-transform:uppercase">★ destacado</span>`:''}</div><div class="ind-value" style="color:${ind.color};${ind.destacado?'font-size:1.3rem;':''}">${ind.formato(val)}</div>${ind.nota?`<div style="font-size:10px;color:var(--text3);margin-top:3px">${ind.nota}</div>`:''}</div>`;
     }).join('');
     document.getElementById('ind-grid').innerHTML=items||'';
     document.getElementById('ind-section').style.display=(items&&soloDistrito)?'':'none';
@@ -718,6 +755,115 @@ function renderDistritos(){
   document.getElementById('d-info').textContent=`${start+1}–${Math.min(start+CONFIG.distritosPorPagina,total)} de ${fmtN(total)} distritos`;
   document.getElementById('d-prev').disabled=distP===0;
   document.getElementById('d-next').disabled=start+CONFIG.distritosPorPagina>=total;
+}
+let analisisP=0,analisisSortCol='pct_fp',analisisSortDir=-1;
+function analisisPage(d){analisisP+=d;renderAnalisis();}
+function sortAnalisis(col){if(analisisSortCol===col)analisisSortDir*=-1;else{analisisSortCol=col;analisisSortDir=-1;}analisisP=0;renderAnalisis();}
+
+function renderAnalisis(){
+  // Construir un objeto por distrito con toda la info necesaria
+  const map={};
+  FILTERED.forEach(r=>{
+    if(r.nivel==='Nacional'||!r.ubigeo) return;
+    const key=String(r.ubigeo);
+    if(!map[key]) map[key]={
+      distrito:r.distrito,departamento:r.departamento,provincia:r.provincia,
+      pob2018_pct:r.pob2018_pct,idh2024:r.idh2024,
+      voto2021_castillo:r.voto2021_castillo,voto2021_keiko:r.voto2021_keiko,
+      vfp:0,vjp:0,vtotal:0
+    };
+    if(r.partido&&r.partido.includes('FUERZA POPULAR')&&r.tipo==='CANDIDATO') map[key].vfp+=r.votos;
+    if(r.partido&&r.partido.includes('JUNTOS POR EL PERÚ')&&r.tipo==='CANDIDATO') map[key].vjp+=r.votos;
+    if(r.tipo==='CANDIDATO') map[key].vtotal+=r.votos;
+  });
+
+  const distritos=Object.values(map).map(d=>({
+    ...d,
+    pct_fp:d.vtotal?d.vfp/d.vtotal*100:0,
+    pct_jp:d.vtotal?d.vjp/d.vtotal*100:0,
+    margen:d.vtotal?(d.vfp-d.vjp)/d.vtotal*100:0,
+    gana_fp:d.vfp>d.vjp,
+  })).filter(d=>d.vtotal>0);
+
+  // ── Bloque 1: Perfil socioeconómico ──
+  const conPob=distritos.filter(d=>d.pob2018_pct!=null);
+  const conIdh=distritos.filter(d=>d.idh2024!=null);
+  const fpDists=distritos.filter(d=>d.gana_fp);
+  const jpDists=distritos.filter(d=>!d.gana_fp);
+  const avg=(arr,key)=>arr.length?arr.reduce((s,d)=>s+(d[key]||0),0)/arr.length:null;
+
+  const pobFP=avg(fpDists.filter(d=>d.pob2018_pct!=null),'pob2018_pct');
+  const pobJP=avg(jpDists.filter(d=>d.pob2018_pct!=null),'pob2018_pct');
+  const idhFP=avg(fpDists.filter(d=>d.idh2024!=null),'idh2024');
+  const idhJP=avg(jpDists.filter(d=>d.idh2024!=null),'idh2024');
+
+  document.getElementById('analisis-perfil').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.85rem;margin-top:.85rem">
+      <div class="did-item"><div class="did-item-label" style="color:var(--fp)">Pobreza prom. · distritos FP</div><div class="did-item-value" style="color:var(--fp)">${pobFP!=null?pobFP.toFixed(1)+'%':'—'}</div><div class="did-item-sub">${fpDists.length} distritos ganados</div></div>
+      <div class="did-item"><div class="did-item-label" style="color:var(--jp)">Pobreza prom. · distritos JP</div><div class="did-item-value" style="color:var(--jp)">${pobJP!=null?pobJP.toFixed(1)+'%':'—'}</div><div class="did-item-sub">${jpDists.length} distritos ganados</div></div>
+      <div class="did-item"><div class="did-item-label" style="color:var(--fp)">IDH prom. · distritos FP</div><div class="did-item-value" style="color:var(--fp)">${idhFP!=null?idhFP.toFixed(3):'—'}</div><div class="did-item-sub">Índice 0–1</div></div>
+      <div class="did-item"><div class="did-item-label" style="color:var(--jp)">IDH prom. · distritos JP</div><div class="did-item-value" style="color:var(--jp)">${idhJP!=null?idhJP.toFixed(3):'—'}</div><div class="did-item-sub">Índice 0–1</div></div>
+    </div>
+    <p style="font-size:11px;color:var(--text3);margin-top:.85rem">Promedios simples por distrito. Pobreza: INEI 2018. IDH: PNUD 2024. Elaboración propia.</p>`;
+
+  // ── Bloque 2: Tabla de fortalezas ──
+  const sorted=[...distritos].sort((a,b)=>{
+    const av=a[analisisSortCol]??-Infinity,bv=b[analisisSortCol]??-Infinity;
+    return(av-bv)*analisisSortDir;
+  });
+  const start=analisisP*CONFIG.filasPorPagina;
+  const page=sorted.slice(start,start+CONFIG.filasPorPagina);
+  document.getElementById('analisis-count').textContent=fmtN(distritos.length)+' distritos';
+  document.getElementById('analisis-body').innerHTML=page.map(d=>{
+    const wColor=d.gana_fp?'var(--fp)':'var(--jp)';
+    const wLabel=d.gana_fp?'FP':'JP';
+    const margenStr=(d.margen>0?'+':'')+d.margen.toFixed(1)+'%';
+    return `<tr>
+      <td><div class="t-name">${d.distrito}</div></td>
+      <td><div class="t-sub">${d.departamento}</div></td>
+      <td class="t-num" style="color:var(--fp)">${d.pct_fp.toFixed(1)}%</td>
+      <td class="t-num" style="color:var(--jp)">${d.pct_jp.toFixed(1)}%</td>
+      <td class="t-num" style="color:${d.margen>0?'var(--fp)':'var(--jp)'}">${margenStr}</td>
+      <td class="t-num">${d.pob2018_pct!=null?d.pob2018_pct.toFixed(1)+'%':'—'}</td>
+      <td class="t-num">${d.idh2024!=null?d.idh2024.toFixed(3):'—'}</td>
+      <td><span class="badge" style="background:${wColor}22;color:${wColor}">${wLabel}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('a-info').textContent=`${start+1}–${Math.min(start+CONFIG.filasPorPagina,distritos.length)} de ${fmtN(distritos.length)}`;
+  document.getElementById('a-prev').disabled=analisisP===0;
+  document.getElementById('a-next').disabled=start+CONFIG.filasPorPagina>=distritos.length;
+
+  // ── Bloque 3: Cambio 2021 → 2026 ──
+  const conCambio=distritos.filter(d=>d.voto2021_keiko!=null&&d.voto2021_castillo!=null&&d.vtotal>0);
+  const cambioFP=conCambio.map(d=>({
+    ...d,
+    cambio:d.vfp-(d.voto2021_keiko||0)
+  })).sort((a,b)=>Math.abs(b.cambio)-Math.abs(a.cambio)).slice(0,10);
+
+  document.getElementById('analisis-cambio').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:.85rem">
+      <div>
+        <div class="section-label" style="color:var(--fp);margin-bottom:.5rem">Mayor ganancia FP vs Keiko 2021</div>
+        ${conCambio.filter(d=>d.vfp-(d.voto2021_keiko||0)>0).sort((a,b)=>(b.vfp-b.voto2021_keiko)-(a.vfp-a.voto2021_keiko)).slice(0,5).map(d=>{
+          const c=d.vfp-(d.voto2021_keiko||0);
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:12px">
+            <span style="color:var(--text2)">${d.distrito}<span style="color:var(--text3);font-size:11px"> · ${d.departamento}</span></span>
+            <span style="color:var(--fp);font-weight:600">+${fmtN(c)}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <div>
+        <div class="section-label" style="color:var(--jp);margin-bottom:.5rem">Mayor ganancia JP vs Castillo 2021</div>
+        ${conCambio.filter(d=>d.vjp-(d.voto2021_castillo||0)>0).sort((a,b)=>(b.vjp-b.voto2021_castillo)-(a.vjp-a.voto2021_castillo)).slice(0,5).map(d=>{
+          const c=d.vjp-(d.voto2021_castillo||0);
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:12px">
+            <span style="color:var(--text2)">${d.distrito}<span style="color:var(--text3);font-size:11px"> · ${d.departamento}</span></span>
+            <span style="color:var(--jp);font-weight:600">+${fmtN(c)}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--text3);margin-top:.85rem">Comparación votos absolutos 2026 vs segunda vuelta 2021 (Keiko Fujimori y Pedro Castillo). Fuente: ONPE · Elaboración propia.</p>`;
 }
 function toggleTheme(){
   document.body.classList.toggle('light');
