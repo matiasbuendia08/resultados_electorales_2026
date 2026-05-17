@@ -25,8 +25,8 @@ const CONFIG = {
     {clave:"pob2018_pct",etiqueta:"Pobreza monetaria 2018",formato:v=>v.toFixed(1)+"%",color:"#C04A4A",nota:"Año: 2018. Fuente: INEI – Mapa de Pobreza Provincial y Distrital 2018. Estimada como promedio del intervalo de confianza al 95%. Cálculos propios.",destacado:true},
     {clave:"idh2024",etiqueta:"IDH 2024",formato:v=>v.toFixed(3),color:"#4A8A8A",nota:"Año: 2024. Fuente: PNUD"},
     {clave:"colegios_3sb",etiqueta:"Colegios 3 SB (%)",formato:v=>v.toFixed(1)+"%",color:"#1A6BB5",nota:"Año: 2025. Fuente: MINEDU. Cálculos propios"},
-    {clave:"colegios_sust",etiqueta:"Colegios en sustitución",formato:v=>v.toFixed(1)+"%",color:"#C04A4A",nota:"Año: 2017. Fuente: INEI. Cálculos propios"},
-    {clave:"viviendas_3sb",etiqueta:"Viviendas 3 SB (%)",formato:v=>v.toFixed(1)+"%",color:"#C0932A",nota:"Año: 2017. Fuente: INEI. Cálculos propios"},
+    {clave:"colegios_sust",etiqueta:"Colegios con necesidad de sustitución",formato:v=>v.toFixed(1)+"%",color:"#C04A4A",nota:"Año: 2017. Fuente: INEI. Cálculos propios. Se consideran colegios con necesidad de sustitución aquellos donde el 70% o más del área techada presenta muy alto riesgo de colapso estructural (MINEDU)."},
+   {clave:"viviendas_3sb",etiqueta:"Viviendas con los tres servicios básicos (%)",formato:v=>v.toFixed(1)+"%",color:"#C0932A",nota:"Año: 2017. Fuente: INEI. Cálculos propios. Incluye viviendas con acceso simultáneo a agua potable, desagüe y electricidad."},
   ],
   filasPorPagina:50,
   distritosPorPagina:24,
@@ -253,7 +253,7 @@ body.light{--bg:#F5F4F0;--bg2:#FFFFFF;--bg3:#EDEDEA;--bg4:#E0DED9;--border:rgba(
     <button class="tab active" onclick="switchTab('resumen',this)">Resumen</button>
     <button class="tab" onclick="switchTab('ranking',this)">Todos los candidatos</button>
     <button class="tab" onclick="switchTab('distritos',this)">Por distrito</button>
-    <button class="tab" onclick="switchTab('analisis',this)">Análisis segunda vuelta</button>
+    <button class="tab" onclick="switchTab('analisis',this)">📊 Análisis distrital</button>
   </div>
 
   <div id="tab-resumen">
@@ -790,7 +790,12 @@ function renderAnalisis(){
   const conIdh=distritos.filter(d=>d.idh2024!=null);
   const fpDists=distritos.filter(d=>d.gana_fp);
   const jpDists=distritos.filter(d=>!d.gana_fp);
-  const avg=(arr,key)=>arr.length?arr.reduce((s,d)=>s+(d[key]||0),0)/arr.length:null;
+  const avg=(arr,key)=>{
+  const validos=arr.filter(d=>d[key]!=null&&d.vtotal>0);
+  if(!validos.length) return null;
+  const totalVotos=validos.reduce((s,d)=>s+d.vtotal,0);
+  return validos.reduce((s,d)=>s+(d[key]*d.vtotal),0)/totalVotos;
+};
 
   const pobFP=avg(fpDists.filter(d=>d.pob2018_pct!=null),'pob2018_pct');
   const pobJP=avg(jpDists.filter(d=>d.pob2018_pct!=null),'pob2018_pct');
@@ -811,8 +816,8 @@ function renderAnalisis(){
     const av=a[analisisSortCol]??-Infinity,bv=b[analisisSortCol]??-Infinity;
     return(av-bv)*analisisSortDir;
   });
-  const start=analisisP*CONFIG.filasPorPagina;
-  const page=sorted.slice(start,start+CONFIG.filasPorPagina);
+  const start=analisisP*10;
+const page=sorted.slice(start,start+10);
   document.getElementById('analisis-count').textContent=fmtN(distritos.length)+' distritos';
   document.getElementById('analisis-body').innerHTML=page.map(d=>{
     const wColor=d.gana_fp?'var(--fp)':'var(--jp)';
@@ -829,41 +834,37 @@ function renderAnalisis(){
       <td><span class="badge" style="background:${wColor}22;color:${wColor}">${wLabel}</span></td>
     </tr>`;
   }).join('');
-  document.getElementById('a-info').textContent=`${start+1}–${Math.min(start+CONFIG.filasPorPagina,distritos.length)} de ${fmtN(distritos.length)}`;
-  document.getElementById('a-prev').disabled=analisisP===0;
-  document.getElementById('a-next').disabled=start+CONFIG.filasPorPagina>=distritos.length;
+  document.getElementById('a-info').textContent=`${start+1}–${Math.min(start+10,distritos.length)} de ${fmtN(distritos.length)}`;
+document.getElementById('a-prev').disabled=analisisP===0;
+document.getElementById('a-next').disabled=start+10>=distritos.length;
 
   // ── Bloque 3: Cambio 2021 → 2026 ──
-  const conCambio=distritos.filter(d=>d.voto2021_keiko!=null&&d.voto2021_castillo!=null&&d.vtotal>0);
-  const cambioFP=conCambio.map(d=>({
-    ...d,
-    cambio:d.vfp-(d.voto2021_keiko||0)
-  })).sort((a,b)=>Math.abs(b.cambio)-Math.abs(a.cambio)).slice(0,10);
+  const conCambio=distritos.filter(d=>d.voto2021_keiko!=null&&d.voto2021_castillo!=null&&d.vtotal>500);
 
-  document.getElementById('analisis-cambio').innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:.85rem">
-      <div>
-        <div class="section-label" style="color:var(--fp);margin-bottom:.5rem">Mayor ganancia FP vs Keiko 2021</div>
-        ${conCambio.filter(d=>d.vfp-(d.voto2021_keiko||0)>0).sort((a,b)=>(b.vfp-b.voto2021_keiko)-(a.vfp-a.voto2021_keiko)).slice(0,5).map(d=>{
-          const c=d.vfp-(d.voto2021_keiko||0);
-          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:12px">
-            <span style="color:var(--text2)">${d.distrito}<span style="color:var(--text3);font-size:11px"> · ${d.departamento}</span></span>
-            <span style="color:var(--fp);font-weight:600">+${fmtN(c)}</span>
-          </div>`;
-        }).join('')}
-      </div>
-      <div>
-        <div class="section-label" style="color:var(--jp);margin-bottom:.5rem">Mayor ganancia JP vs Castillo 2021</div>
-        ${conCambio.filter(d=>d.vjp-(d.voto2021_castillo||0)>0).sort((a,b)=>(b.vjp-b.voto2021_castillo)-(a.vjp-a.voto2021_castillo)).slice(0,5).map(d=>{
-          const c=d.vjp-(d.voto2021_castillo||0);
-          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:12px">
-            <span style="color:var(--text2)">${d.distrito}<span style="color:var(--text3);font-size:11px"> · ${d.departamento}</span></span>
-            <span style="color:var(--jp);font-weight:600">+${fmtN(c)}</span>
-          </div>`;
-        }).join('')}
-      </div>
+document.getElementById('analisis-cambio').innerHTML=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:.85rem">
+    <div>
+      <div class="section-label" style="color:var(--fp);margin-bottom:.5rem">Mayor caída FP vs Keiko 2021</div>
+      ${conCambio.filter(d=>d.vfp<(d.voto2021_keiko||0)).sort((a,b)=>((a.vfp-a.voto2021_keiko)/a.voto2021_keiko)-((b.vfp-b.voto2021_keiko)/b.voto2021_keiko)).slice(0,5).map(d=>{
+        const pct=((d.vfp-(d.voto2021_keiko||0))/(d.voto2021_keiko||1)*100).toFixed(1);
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:12px">
+          <span style="color:var(--text2)">${d.distrito}<span style="color:var(--text3);font-size:11px"> · ${d.departamento}</span></span>
+          <span style="color:#C04A4A;font-weight:600">${pct}%</span>
+        </div>`;
+      }).join('')}
     </div>
-    <p style="font-size:11px;color:var(--text3);margin-top:.85rem">Comparación votos absolutos 2026 vs segunda vuelta 2021 (Keiko Fujimori y Pedro Castillo). Fuente: ONPE · Elaboración propia.</p>`;
+    <div>
+      <div class="section-label" style="color:var(--jp);margin-bottom:.5rem">Mayor ganancia JP vs Castillo 2021</div>
+      ${conCambio.filter(d=>d.vjp>(d.voto2021_castillo||0)).sort((a,b)=>((b.vjp-b.voto2021_castillo)/b.voto2021_castillo)-((a.vjp-a.voto2021_castillo)/a.voto2021_castillo)).slice(0,5).map(d=>{
+        const pct=((d.vjp-(d.voto2021_castillo||0))/(d.voto2021_castillo||1)*100).toFixed(1);
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:12px">
+          <span style="color:var(--text2)">${d.distrito}<span style="color:var(--text3);font-size:11px"> · ${d.departamento}</span></span>
+          <span style="color:var(--jp);font-weight:600">+${pct}%</span>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+  <p style="font-size:11px;color:var(--text3);margin-top:.85rem">Variación porcentual respecto a segunda vuelta 2021. Solo distritos con más de 500 votos válidos. Fuente: ONPE · Elaboración propia.</p>`;
 }
 function toggleTheme(){
   document.body.classList.toggle('light');
