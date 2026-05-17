@@ -538,7 +538,7 @@ document.getElementById('f-dist').addEventListener('change',applyFilters);
 
 function switchTab(tab,btn){
   curTab=tab;
-  ['resumen','ranking','distritos'].forEach(t=>document.getElementById('tab-'+t).style.display=t===tab?'':'none');
+  ['resumen','ranking','distritos','analisis'].forEach(t=>document.getElementById('tab-'+t).style.display=t===tab?'':'none');
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');render();
 }
