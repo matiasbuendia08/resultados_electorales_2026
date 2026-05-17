@@ -580,15 +580,16 @@ function renderKPIs(){
   // Contar distritos ganados
 const distMap={};
 FILTERED.forEach(r=>{
-  if(r.nivel==='Nacional'||!r.ubigeo) return;
+  if(r.nivel==='Nacional'||!r.ubigeo||r.tipo!=='CANDIDATO') return;
   const key=String(r.ubigeo);
-  if(!distMap[key]) distMap[key]={vfp:0,vjp:0};
-  if(r.partido&&r.partido.includes('FUERZA POPULAR')&&r.tipo==='CANDIDATO') distMap[key].vfp+=r.votos;
-  if(r.partido&&r.partido.includes('JUNTOS POR EL PERÚ')&&r.tipo==='CANDIDATO') distMap[key].vjp+=r.votos;
+  if(!distMap[key]) distMap[key]={vfp:0,vjp:0,vmax:0,ganador:''};
+  if(r.partido&&r.partido.includes('FUERZA POPULAR')) distMap[key].vfp+=r.votos;
+  if(r.partido&&r.partido.includes('JUNTOS POR EL PERÚ')) distMap[key].vjp+=r.votos;
+  if(r.votos>distMap[key].vmax){distMap[key].vmax=r.votos;distMap[key].ganador=r.partido;}
 });
-const distFP=Object.values(distMap).filter(d=>d.vfp>0&&d.vfp>d.vjp).length;
-const distJP=Object.values(distMap).filter(d=>d.vjp>0&&d.vjp>d.vfp).length;
-const distTotal=Object.values(distMap).filter(d=>d.vfp>0||d.vjp>0).length;
+const distFP=Object.values(distMap).filter(d=>d.ganador&&d.ganador.includes('FUERZA POPULAR')).length;
+const distJP=Object.values(distMap).filter(d=>d.ganador&&d.ganador.includes('JUNTOS POR EL PERÚ')).length;
+const distTotal=Object.values(distMap).length;
   document.getElementById('kpi-grid').innerHTML=`
     <div class="kpi fp"><div class="kpi-label">${CONFIG.partido1.etiqueta}</div><div class="kpi-value" id="kv-fp">—</div><div class="kpi-sub">${fmtN(p1V)} votos válidos</div></div>
     <div class="kpi jp"><div class="kpi-label">${CONFIG.partido2.etiqueta}</div><div class="kpi-value" id="kv-jp">—</div><div class="kpi-sub">${fmtN(p2V)} votos válidos</div></div>
