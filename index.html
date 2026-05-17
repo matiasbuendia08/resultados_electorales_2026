@@ -269,14 +269,6 @@ body.light{--bg:#F5F4F0;--bg2:#FFFFFF;--bg3:#EDEDEA;--bg4:#E0DED9;--border:rgba(
 
   <div id="tab-resumen">
     <div class="main">
-      <div class="full-bar-card fade-in">
-        <div class="fbc-header">
-          <span>Distribución del total de votos emitidos (100%)</span>
-          <span id="total-emitidos-lbl"></span>
-        </div>
-        <div class="full-bar" id="full-bar"></div>
-        <div class="full-bar-legend" id="full-bar-legend"></div>
-      </div>
       <<div class="charts-row fade-in">
 </div>
       </div>
@@ -748,7 +740,14 @@ const winner=cands[0];
     const items=CONFIG.indicadoresDistrito.map(ind=>{
       const val=row0[ind.clave];
       if(!val||isNaN(val)) return '';
-     return `<div class="ind-card" style="border-left-color:${ind.color};${ind.destacado?'border-left-width:5px;background:'+ind.color+'18;':''}"><div class="ind-label">${ind.etiqueta}${ind.destacado?` <span style="font-size:9px;font-weight:700;letter-spacing:.08em;color:${ind.color};text-transform:uppercase">★ destacado</span>`:''}</div><div class="ind-value" style="color:${ind.color};${ind.destacado?'font-size:1.3rem;':''}">${ind.formato(val)}</div>${ind.nota?`<div style="font-size:10px;color:var(--text3);margin-top:3px">${ind.nota}</div>`:''}</div>`;
+     let rankHTML='';
+if(ind.clave==='idh2024'){
+  const todosConIdh=ALL.filter(r=>r.nivel!=='Nacional'&&r.idh2024!=null);
+  const unicos=[...new Map(todosConIdh.map(r=>[String(r.ubigeo),r.idh2024])).entries()].sort((a,b)=>b[1]-a[1]);
+  const pos=unicos.findIndex(([,v])=>Math.abs(v-val)<0.0001)+1;
+  if(pos>0) rankHTML=`<div style="font-size:10px;color:var(--text3);margin-top:4px">Puesto <strong style="color:${ind.color}">${fmtN(pos)}</strong> de ${fmtN(unicos.length)} distritos</div>`;
+}
+return `<div class="ind-card" style="border-left-color:${ind.color};${ind.destacado?'border-left-width:5px;background:'+ind.color+'18;':''}"><div class="ind-label">${ind.etiqueta}${ind.destacado?` <span style="font-size:9px;font-weight:700;letter-spacing:.08em;color:${ind.color};text-transform:uppercase">★ destacado</span>`:''}</div><div class="ind-value" style="color:${ind.color};${ind.destacado?'font-size:1.3rem;':''}">${ind.formato(val)}</div>${rankHTML}${ind.nota?`<div style="font-size:10px;color:var(--text3);margin-top:3px">${ind.nota}</div>`:''}</div>`;
     }).join('');
     document.getElementById('ind-grid').innerHTML=items||'';
     document.getElementById('ind-section').style.display=(items&&soloDistrito)?'':'none';
