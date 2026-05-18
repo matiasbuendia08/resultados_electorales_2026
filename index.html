@@ -960,22 +960,22 @@ const topKeikoAJP=[...keikoAJP].sort((a,b)=>
 document.getElementById('analisis-cambio').innerHTML=`
   <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;line-height:1.6">
     El mapa político que cambió: <strong style="color:var(--text)">de los ${fmtN(conCambio.length)} distritos con datos comparables</strong>,
-    <strong style="color:var(--fp)">${castilloAFP.length}</strong> que ganó Castillo en 2021 ahora los gana Fujimori,
-    y <strong style="color:var(--jp)">${keikoAJP.length}</strong> que ganó Keiko ahora los gana Sánchez.
+    <strong style="color:var(--fp)">${castilloAFP.length}</strong> que lideró Castillo en 2021 ahora los lidera Fujimori,
+    y <strong style="color:var(--jp)">${keikoAJP.length}</strong> que lideró Keiko en 2021 ahora los lidera Sánchez.
   </p>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1rem">
     <div style="background:var(--fp)18;border:1px solid var(--fp)33;border-radius:8px;padding:1rem;text-align:center">
       <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;color:var(--fp);line-height:1">${castilloAFP.length}</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:.3rem;text-transform:uppercase;letter-spacing:.08em">Castillo 2021 → <strong>FP 2026</strong></div>
+      <div style="font-size:11px;color:var(--text2);margin-top:.3rem;text-transform:uppercase;letter-spacing:.08em">Castillo 2021 → <strong>Fujimori 2026</strong></div>
     </div>
     <div style="background:var(--jp)18;border:1px solid var(--jp)33;border-radius:8px;padding:1rem;text-align:center">
       <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;color:var(--jp);line-height:1">${keikoAJP.length}</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:.3rem;text-transform:uppercase;letter-spacing:.08em">Keiko 2021 → <strong>JP 2026</strong></div>
+      <div style="font-size:11px;color:var(--text2);margin-top:.3rem;text-transform:uppercase;letter-spacing:.08em">Keiko 2021 → <strong>Sánchez 2026</strong></div>
     </div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:.5rem">
     <div>
-      <div class="section-label" style="color:var(--fp);margin-bottom:.5rem">Más sorprendentes · Castillo → FP</div>
+      <div class="section-label" style="color:var(--fp);margin-bottom:.5rem">Más sorprendentes · Castillo → Fujimori</div>
       ${topCastilloAFP.map(d=>{
         const margen=(d.pct_fp-d.pct_jp).toFixed(1);
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:12px">
@@ -985,7 +985,7 @@ document.getElementById('analisis-cambio').innerHTML=`
       }).join('')}
     </div>
     <div>
-      <div class="section-label" style="color:var(--jp);margin-bottom:.5rem">Más sorprendentes · Keiko → JP</div>
+      <div class="section-label" style="color:var(--jp);margin-bottom:.5rem">Más sorprendentes · Keiko → Sánchez</div>
       ${topKeikoAJP.map(d=>{
         const margen=(d.pct_jp-d.pct_fp).toFixed(1);
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:12px">
@@ -995,7 +995,7 @@ document.getElementById('analisis-cambio').innerHTML=`
       }).join('')}
     </div>
   </div>
-  <p style="font-size:11px;color:var(--text3);margin-top:.85rem">Comparación con segunda vuelta 2021 (Castillo vs Keiko). Solo distritos con más de 500 votos válidos. Fuente: ONPE · Elaboración propia.</p>`;
+  <p style="font-size:11px;color:var(--text3);margin-top:.85rem">Comparación con segunda vuelta 2021 (Castillo vs Keiko) y primera vuelta 2026 (Fujimori vs Sánchez). Se identifica al candidato con más votos en cada distrito en cada elección. <strong style="color:var(--text2)">Nota metodológica:</strong> esto no implica transferencia de votos entre candidatos — solo que el candidato líder del distrito cambió entre elecciones. En 2021 los votos se distribuían entre dos candidatos; en 2026 entre 35, por lo que el voto es más fragmentado. Solo distritos con más de 500 votos válidos en 2026. Fuente: ONPE · Elaboración propia.</p>`;
 }
   window.addEventListener('scroll',()=>{
   const hint=document.getElementById('scroll-hint');
