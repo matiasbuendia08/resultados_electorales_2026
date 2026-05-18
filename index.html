@@ -579,8 +579,8 @@ const distTotal=Object.values(distMap).length;
     <div class="kpi jp"><div class="kpi-label">${CONFIG.partido2.etiqueta}</div><div class="kpi-value" id="kv-jp">—</div><div class="kpi-sub">${fmtN(p2V)} votos válidos</div></div>
     <div class="kpi"><div class="kpi-label">Total votos válidos</div><div class="kpi-value" id="kv-total">—</div><div class="kpi-sub">${fmtN(total)} votos</div></div>
     <div class="kpi"><div class="kpi-label">Blancos + Nulos</div><div class="kpi-value" style="color:var(--text2)" id="kv-bn">—</div><div class="kpi-sub">${fmtN(blancos)} blancos · ${fmtN(nulos)} nulos</div></div>
-    <div class="kpi fp"><div class="kpi-label">Distritos ganados · FP</div><div class="kpi-value" id="kv-dfp">—</div><div class="kpi-sub">de ${fmtN(distTotal)} distritos</div></div>
-    <div class="kpi jp"><div class="kpi-label">Distritos ganados · JP</div><div class="kpi-value" id="kv-djp">—</div><div class="kpi-sub">de ${fmtN(distTotal)} distritos</div></div>`;
+    <div class="kpi fp"><div class="kpi-label">Distritos donde tuvo la mayor cantidad de votos · FP</div><div class="kpi-value" id="kv-dfp">—</div><div class="kpi-sub">de ${fmtN(distTotal)} distritos</div></div>
+    <div class="kpi jp"><div class="kpi-label">Distritos donde tuvo la mayor cantidad de votos · JP</div><div class="kpi-value" id="kv-djp">—</div><div class="kpi-sub">de ${fmtN(distTotal)} distritos</div></div>`;
   
   // Animar contadores
   function animCount(id, target, fmt, duration=800){
@@ -959,9 +959,9 @@ const topKeikoAJP=[...keikoAJP].sort((a,b)=>
 document.getElementById('analisis-cambio').innerHTML=`
   <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;line-height:1.6">
     El mapa político que cambió: <strong style="color:var(--text)">de los ${fmtN(conCambio.length)} distritos con datos comparables</strong>,
-    <strong style="color:var(--fp)">${castilloAFP.length}</strong> que lideró Castillo en 2021 ahora los lidera Fujimori,
-    y <strong style="color:var(--jp)">${keikoAJP.length}</strong> que lideró Keiko en 2021 ahora los lidera Sánchez.
-  </p>
+    <strong style="color:var(--fp)">${castilloAFP.length}</strong> donde Castillo obtuvo más votos en 2021 ahora registran más votos para Fujimori,
+y <strong style="color:var(--jp)">${keikoAJP.length}</strong> donde Keiko obtuvo más votos en 2021 ahora registran más votos para Sánchez.
+</p>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1rem">
     <div style="background:var(--fp)18;border:1px solid var(--fp)33;border-radius:8px;padding:1rem;text-align:center">
       <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;color:var(--fp);line-height:1">${castilloAFP.length}</div>
