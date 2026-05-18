@@ -949,7 +949,7 @@ const keikoAJP=conCambio.filter(d=>d.voto2021_keiko>d.voto2021_castillo&&d.gana_
 const totalCambio=conCambio.length;
 
 const topCastilloAFP=[...castilloAFP].sort((a,b)=>
-  (b.pct_fp-b.pct_jp)-(a.pct_fp-a.pct_jp)
+  (b.pct_jp-b.pct_fp)-(a.pct_jp-a.pct_fp)
 ).slice(0,5);
 
 const topKeikoAJP=[...keikoAJP].sort((a,b)=>
@@ -977,10 +977,10 @@ document.getElementById('analisis-cambio').innerHTML=`
     <div>
       <div class="section-label" style="color:var(--fp);margin-bottom:.5rem">Más sorprendentes · Castillo → Keiko</div>
       ${topCastilloAFP.map(d=>{
-        const margen=(d.pct_fp-d.pct_jp).toFixed(1);
+        const margen=(d.pct_jp-d.pct_fp).toFixed(1);
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:12px">
           <span style="color:var(--text2)">${d.distrito}<span style="color:var(--text3);font-size:11px"> · ${d.departamento}</span></span>
-          <span style="color:var(--fp);font-weight:600">FP +${margen}pp</span>
+          <span style="color:var(--jp);font-weight:600">JP +${margen}pp</span>
         </div>`;
       }).join('')}
     </div>
