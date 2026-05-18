@@ -270,7 +270,6 @@ body.light{--bg:#F5F4F0;--bg2:#FFFFFF;--bg3:#EDEDEA;--bg4:#E0DED9;--border:rgba(
   <div id="tab-resumen">
     <div class="main">
       <div class="charts-row fade-in">
-</div>
       </div>
       <div class="did-box fade-in" id="did-box" style="display:none">
         <h3 id="did-title"></h3>
@@ -340,7 +339,6 @@ body.light{--bg:#F5F4F0;--bg2:#FFFFFF;--bg3:#EDEDEA;--bg4:#E0DED9;--border:rgba(
 
   <div id="tab-analisis" style="display:none">
   <div class="main">
-    <div class="full-bar-card fade-in">
     <div class="full-bar-card fade-in">
       <div class="fbc-header"><span>Perfil socioeconómico del voto · 2026</span></div>
       <div id="analisis-perfil"></div>
@@ -550,7 +548,7 @@ function switchTab(tab,btn){
 
 function render(){
   renderKPIs();
-  if(curTab==='resumen'){renderFullBar();renderCharts();renderDidactic();}
+  if(curTab==='resumen'){renderCharts();renderDidactic();}
   if(curTab==='ranking') renderRanking();
   if(curTab==='distritos') renderDistritos();
   if(curTab==='analisis') renderAnalisis();
