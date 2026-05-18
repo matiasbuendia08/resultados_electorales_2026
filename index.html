@@ -959,8 +959,8 @@ const topKeikoAJP=[...keikoAJP].sort((a,b)=>
 document.getElementById('analisis-cambio').innerHTML=`
   <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;line-height:1.6">
     El mapa político que cambió: <strong style="color:var(--text)">de los ${fmtN(conCambio.length)} distritos con datos comparables</strong>,
-    <strong style="color:var(--fp)">${castilloAFP.length}</strong> donde Castillo obtuvo más votos en 2021 ahora registran más votos para Fujimori,
-y <strong style="color:var(--jp)">${keikoAJP.length}</strong> donde Keiko obtuvo más votos en 2021 ahora registran más votos para Sánchez.
+    <strong style="color:var(--fp)">${castilloAFP.length}</strong> donde Castillo obtuvo más votos que Fujimori en 2021 ahora Fujimori obtuvo más votos que Sánchez,
+y <strong style="color:var(--jp)">${keikoAJP.length}</strong> donde Keiko obtuvo más votos que Castillo en 2021 ahora Sánchez obtuvo más votos de Fujimori.
 </p>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1rem">
     <div style="background:var(--fp)18;border:1px solid var(--fp)33;border-radius:8px;padding:1rem;text-align:center">
