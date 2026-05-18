@@ -944,8 +944,8 @@ document.getElementById('a-next').disabled=start+10>=distritos.length;
   // ── Bloque 3: Distritos que cambiaron de bando ──
 const conCambio=distritos.filter(d=>d.voto2021_keiko!=null&&d.voto2021_castillo!=null&&d.vtotal>500);
 
-const castilloAFP=conCambio.filter(d=>d.voto2021_castillo>d.voto2021_keiko&&d.gana_fp);
-const keikoAJP=conCambio.filter(d=>d.voto2021_keiko>d.voto2021_castillo&&!d.gana_fp);
+const castilloAFP=conCambio.filter(d=>d.voto2021_castillo>d.voto2021_keiko&&!d.gana_fp);
+const keikoAJP=conCambio.filter(d=>d.voto2021_keiko>d.voto2021_castillo&&d.gana_fp);
 const totalCambio=conCambio.length;
 
 const topCastilloAFP=[...castilloAFP].sort((a,b)=>
