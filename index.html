@@ -359,7 +359,7 @@ body.light{--bg:#F5F4F0;--bg2:#FFFFFF;--bg3:#EDEDEA;--bg4:#E0DED9;--border:rgba(
     </div>
 
     <div class="full-bar-card fade-in">
-      <div class="fbc-header"><span>Distritos en disouta · resultado cerrado entre FP y JP</span><span id="bisagra-count"></span></div>
+      <div class="fbc-header"><span>Distritos en disputa · resultado cerrado entre FP y JP</span><span id="bisagra-count"></span></div>
       <p style="font-size:13px;color:var(--text2);margin:.25rem 0 1rem;line-height:1.7">Distritos con alto volumen de votos donde la diferencia entre FP y JP fue menor a 5 puntos porcentuales. El resultado en estos distritos es el más difícil de anticipar para la segunda vuelta.</p>
       <div class="table-scroll"><table><thead><tr>
         <th onclick="sortBisagra('distrito')">Distrito</th>
@@ -1054,7 +1054,7 @@ y <strong style="color:var(--jp)">${keikoAJP.length}</strong> donde Fujimori obt
       <td class="t-num" style="color:var(--text2)">${fmtN(d.vtotal)}</td>
       <td><span class="badge" style="background:${wColor}22;color:${wColor}">${wLabel} · ${pctGanador}%</span></td>
     </tr>`;
-  }).join('')||`<tr><td colspan="7" style="padding:1.5rem;text-align:center;color:var(--text3);font-style:italic">Sin distritos bisagra con los filtros actuales.</td></tr>`;
+  }).join('')||`<tr><td colspan="7" style="padding:1.5rem;text-align:center;color:var(--text3);font-style:italic">Sin distritos con los filtros actuales.</td></tr>`;
   document.getElementById('b-info').textContent=`${bisagraStart+1}–${Math.min(bisagraStart+10,bisagra.length)} de ${fmtN(bisagra.length)}`;
   document.getElementById('b-prev').disabled=bisagraP===0;
   document.getElementById('b-next').disabled=bisagraStart+10>=bisagra.length;
