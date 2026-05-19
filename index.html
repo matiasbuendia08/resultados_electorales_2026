@@ -354,13 +354,13 @@ body.light{--bg:#F5F4F0;--bg2:#FFFFFF;--bg3:#EDEDEA;--bg4:#E0DED9;--border:rgba(
     </div>
 
     <div class="full-bar-card fade-in">
-      <div class="fbc-header"><span>Cambio de voto 2021 → 2026 · Top 10 distritos</span></div>
+      <div class="fbc-header"><span>Cambio de voto en primera vuelta 2021 → 2026 · Top 10 distritos</span></div>
       <div id="analisis-cambio"></div>
     </div>
 
     <div class="full-bar-card fade-in">
-      <div class="fbc-header"><span>Distritos bisagra · resultado cerrado entre FP y JP</span><span id="bisagra-count"></span></div>
-      <p style="font-size:13px;color:var(--text2);margin:.25rem 0 1rem;line-height:1.7">Distritos con alto volumen de votos donde la diferencia entre FP y JP fue menor a 5 puntos porcentuales. Estos territorios son los más propensos a decidir el balotaje.</p>
+      <div class="fbc-header"><span>Distritos en disouta · resultado cerrado entre FP y JP</span><span id="bisagra-count"></span></div>
+      <p style="font-size:13px;color:var(--text2);margin:.25rem 0 1rem;line-height:1.7">Distritos con alto volumen de votos donde la diferencia entre FP y JP fue menor a 5 puntos porcentuales. El resultado en estos distritos es el más difícil de anticipar para la segunda vuelta.</p>
       <div class="table-scroll"><table><thead><tr>
         <th onclick="sortBisagra('distrito')">Distrito</th>
         <th onclick="sortBisagra('departamento')">Dpto.</th>
@@ -980,7 +980,7 @@ document.getElementById('a-next').disabled=start+10>=distritos.length;
 const conCambio=distritos.filter(d=>d.voto2021_keiko!=null&&d.voto2021_castillo!=null&&d.vtotal>500);
 
 const castilloAFP=conCambio.filter(d=>d.voto2021_castillo>d.voto2021_keiko&&!d.gana_fp);
-const keikoAJP=conCambio.filter(d=>d.voto2021_keiko>d.voto2021_castillo&&d.gana_fp);
+const keikoAJP=conCambio.filter(d=>d.voto2021_keiko>d.voto2021_castillo&&!d.gana_fp);
 const totalCambio=conCambio.length;
 
 const topCastilloAFP=[...castilloAFP].sort((a,b)=>
@@ -988,14 +988,14 @@ const topCastilloAFP=[...castilloAFP].sort((a,b)=>
 ).slice(0,5);
 
 const topKeikoAJP=[...keikoAJP].sort((a,b)=>
-  (b.pct_fp-b.pct_jp)-(a.pct_fp-a.pct_jp)
+  (b.voto2021_keiko-b.voto2021_castillo)-(a.voto2021_keiko-a.voto2021_castillo)
 ).slice(0,5);
 
 document.getElementById('analisis-cambio').innerHTML=`
   <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;line-height:1.6">
     El mapa político que cambió: <strong style="color:var(--text)">de los ${fmtN(conCambio.length)} distritos con datos comparables</strong>,
     <strong style="color:var(--fp)">${castilloAFP.length}</strong> donde Castillo obtuvo más votos que Fujimori en 2021 ahora Fujimori obtuvo más votos que Sánchez,
-y <strong style="color:var(--jp)">${keikoAJP.length}</strong> donde Keiko obtuvo más votos que Castillo en 2021 ahora Sánchez obtuvo más votos de Fujimori.
+y <strong style="color:var(--jp)">${keikoAJP.length}</strong> donde Fujimori obtuvo más votos que Castillo en 2021 ahora Sánchez obtuvo más votos de Fujimori.
 </p>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1rem">
     <div style="background:var(--fp)18;border:1px solid var(--fp)33;border-radius:8px;padding:1rem;text-align:center">
@@ -1019,7 +1019,7 @@ y <strong style="color:var(--jp)">${keikoAJP.length}</strong> donde Keiko obtuvo
       }).join('')}
     </div>
     <div>
-      <div class="section-label" style="color:var(--jp);margin-bottom:.5rem">Mayor ventaja Keiko 2021 · ahora lidera Sánchez</div>
+      <div class="section-label" style="color:var(--jp);margin-bottom:.5rem">Mayor ventaja Fujimori 2021 · ahora lidera Sánchez</div>
       ${topKeikoAJP.map(d=>{
         const margen2021=((d.voto2021_keiko-d.voto2021_castillo)/(d.voto2021_castillo+d.voto2021_keiko)*100).toFixed(1);
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:12px">
@@ -1029,7 +1029,7 @@ y <strong style="color:var(--jp)">${keikoAJP.length}</strong> donde Keiko obtuvo
       }).join('')}
     </div>
   </div>
-  <p style="font-size:11px;color:var(--text3);margin-top:.85rem">Se muestran los distritos donde el candidato líder en 2021 tenía mayor ventaja sobre su rival directo y que sin embargo cambiaron de líder en 2026. Los pp indican el margen en segunda vuelta 2021 (Castillo vs Keiko), calculado sobre el total de votos entre ambos. <strong style="color:var(--text2)">Nota metodológica:</strong> no implica transferencia de votos — solo que el candidato líder del distrito cambió. El voto es más fragmentado, en 2021 los votos se repartían entre dos; en 2026 entre 35. Solo distritos con más de 500 votos válidos en 2026. Fuente: ONPE · Elaboración propia.</p>`;
+  <p style="font-size:11px;color:var(--text3);margin-top:.85rem">Se muestran los distritos donde el candidato líder en 2021 tenía mayor ventaja sobre su rival directo y que sin embargo cambiaron de líder en 2026. Los pp indican el margen en primera vuelta 2021 (Castillo vs Keiko), calculado sobre el total de votos entre ambos. <strong style="color:var(--text2)">Nota metodológica:</strong> no implica transferencia de votos — solo que el candidato líder del distrito cambió. El voto es más fragmentado, en 2021 los votos se repartían entre 23; en 2026 entre 35. Solo distritos con más de 500 votos válidos en 2026. Fuente: ONPE · Elaboración propia.</p>`;
 
   // ── Bloque 4: Distritos bisagra ──
   const bisagra=[...distritos]
