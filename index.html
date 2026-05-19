@@ -337,16 +337,47 @@ body.light{--bg:#F5F4F0;--bg2:#FFFFFF;--bg3:#EDEDEA;--bg4:#E0DED9;--border:rgba(
     </div>
   </div>
 
-  <div id="tab-analisis" style="display:none">
+ <div id="tab-analisis" style="display:none">
   <div class="main">
+
+    <div class="full-bar-card fade-in">
+      <div style="border-left:3px solid var(--fp);padding-left:1rem">
+        <p style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:.5rem">Nota metodológica · análisis post-primera vuelta</p>
+        <p style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:.4rem;line-height:1.5">Esta sección analiza el duelo <span style="color:var(--fp)">Fuerza Popular</span> vs. <span style="color:var(--jp)">Juntos por el Perú</span> como si fueran los únicos dos candidatos.</p>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin:0">Con 35 listas en competencia, ningún candidato concentró el voto como en una segunda vuelta. Para anticipar el balotaje, los analistas suelen mirar qué territorios inclinaron la balanza entre las dos opciones más votadas. Los indicadores de pobreza, IDH y cambio electoral que aparecen abajo <strong>solo comparan FP y JP</strong> — los demás partidos no desaparecen, simplemente no son el foco de esta sección. Para ver el resultado completo, usa las pestañas <em>Resumen</em> o <em>Todos los candidatos</em>.</p>
+      </div>
+    </div>
+
     <div class="full-bar-card fade-in">
       <div class="fbc-header"><span>Perfil socioeconómico del voto · 2026</span></div>
       <div id="analisis-perfil"></div>
     </div>
+
     <div class="full-bar-card fade-in">
       <div class="fbc-header"><span>Cambio de voto 2021 → 2026 · Top 10 distritos</span></div>
       <div id="analisis-cambio"></div>
     </div>
+
+    <div class="full-bar-card fade-in">
+      <div class="fbc-header"><span>Distritos bisagra · resultado cerrado entre FP y JP</span><span id="bisagra-count"></span></div>
+      <p style="font-size:13px;color:var(--text2);margin:.25rem 0 1rem;line-height:1.7">Distritos con alto volumen de votos donde la diferencia entre FP y JP fue menor a 5 puntos porcentuales. Estos territorios son los más propensos a decidir el balotaje.</p>
+      <div class="table-scroll"><table><thead><tr>
+        <th onclick="sortBisagra('distrito')">Distrito</th>
+        <th onclick="sortBisagra('departamento')">Dpto.</th>
+        <th onclick="sortBisagra('pct_fp')" style="color:var(--fp)">FP %</th>
+        <th onclick="sortBisagra('pct_jp')" style="color:var(--jp)">JP %</th>
+        <th onclick="sortBisagra('margen')" class="sorted">Margen</th>
+        <th onclick="sortBisagra('vtotal')">Votos válidos</th>
+        <th>Ganó</th>
+      </tr></thead><tbody id="bisagra-body"></tbody></table></div>
+      <div class="pagination">
+        <button class="page-btn" id="b-prev" onclick="bisagraPage(-1)" disabled>← Anterior</button>
+        <span class="page-info" id="b-info"></span>
+        <button class="page-btn" id="b-next" onclick="bisagraPage(1)">Siguiente →</button>
+      </div>
+      <p style="font-size:11px;color:var(--text3);padding:.5rem 0 0">Criterio: diferencia ≤ 5 pp entre FP y JP sobre votos válidos de candidatos. Ordenados por total de votos válidos descendente. Fuente: ONPE · Elaboración propia.</p>
+    </div>
+
     <div class="full-bar-card fade-in">
       <div class="fbc-header"><span>Fortalezas por distrito · FP vs JP</span><span id="analisis-count"></span></div>
       <div class="table-scroll"><table><thead><tr>
@@ -363,10 +394,11 @@ body.light{--bg:#F5F4F0;--bg2:#FFFFFF;--bg3:#EDEDEA;--bg4:#E0DED9;--border:rgba(
         <button class="page-btn" id="a-prev" onclick="analisisPage(-1)" disabled>← Anterior</button>
         <span class="page-info" id="a-info"></span>
         <button class="page-btn" id="a-next" onclick="analisisPage(1)">Siguiente →</button>
+      </div>
     </div>
+
   </div>
 </div>
-    </div>
 
   <footer>
     <span id="footer-src"></span>
@@ -861,6 +893,9 @@ function renderDistritos(){
   document.getElementById('d-next').disabled=start+CONFIG.distritosPorPagina>=total;
 }
 let analisisP=0,analisisSortCol='pct_fp',analisisSortDir=-1;
+let bisagraP=0,bisagraSortCol='vtotal',bisagraSortDir=-1;
+function bisagraPage(d){bisagraP+=d;renderAnalisis();}
+function sortBisagra(col){if(bisagraSortCol===col)bisagraSortDir*=-1;else{bisagraSortCol=col;bisagraSortDir=-1;}bisagraP=0;renderAnalisis();}
 function analisisPage(d){analisisP+=d;renderAnalisis();}
 function sortAnalisis(col){if(analisisSortCol===col)analisisSortDir*=-1;else{analisisSortCol=col;analisisSortDir=-1;}analisisP=0;renderAnalisis();}
 
@@ -995,6 +1030,34 @@ y <strong style="color:var(--jp)">${keikoAJP.length}</strong> donde Keiko obtuvo
     </div>
   </div>
   <p style="font-size:11px;color:var(--text3);margin-top:.85rem">Se muestran los distritos donde el candidato líder en 2021 tenía mayor ventaja sobre su rival directo y que sin embargo cambiaron de líder en 2026. Los pp indican el margen en segunda vuelta 2021 (Castillo vs Keiko), calculado sobre el total de votos entre ambos. <strong style="color:var(--text2)">Nota metodológica:</strong> no implica transferencia de votos — solo que el candidato líder del distrito cambió. El voto es más fragmentado, en 2021 los votos se repartían entre dos; en 2026 entre 35. Solo distritos con más de 500 votos válidos en 2026. Fuente: ONPE · Elaboración propia.</p>`;
+
+  // ── Bloque 4: Distritos bisagra ──
+  const bisagra=[...distritos]
+    .filter(d=>Math.abs(d.pct_fp-d.pct_jp)<=5&&d.vtotal>=1000)
+    .sort((a,b)=>{
+      const av=a[bisagraSortCol]??-Infinity,bv=b[bisagraSortCol]??-Infinity;
+      return(av-bv)*bisagraSortDir;
+    });
+  document.getElementById('bisagra-count').textContent=fmtN(bisagra.length)+' distritos';
+  const bisagraStart=bisagraP*10,bisagraPage_=bisagra.slice(bisagraStart,bisagraStart+10);
+  document.getElementById('bisagra-body').innerHTML=bisagraPage_.map(d=>{
+    const wColor=d.gana_fp?'var(--fp)':'var(--jp)';
+    const wLabel=d.gana_fp?'FP':'JP';
+    const margenStr=(d.margen>0?'+':'')+d.margen.toFixed(1)+'pp';
+    const pctGanador=(d.gana_fp?d.pct_fp:d.pct_jp).toFixed(1);
+    return`<tr>
+      <td><div class="t-name">${d.distrito}</div></td>
+      <td><div class="t-sub">${d.departamento}</div></td>
+      <td class="t-num" style="color:var(--fp)">${d.pct_fp.toFixed(1)}%</td>
+      <td class="t-num" style="color:var(--jp)">${d.pct_jp.toFixed(1)}%</td>
+      <td class="t-num" style="color:${d.margen>0?'var(--fp)':'var(--jp)'}">${margenStr}</td>
+      <td class="t-num" style="color:var(--text2)">${fmtN(d.vtotal)}</td>
+      <td><span class="badge" style="background:${wColor}22;color:${wColor}">${wLabel} · ${pctGanador}%</span></td>
+    </tr>`;
+  }).join('')||`<tr><td colspan="7" style="padding:1.5rem;text-align:center;color:var(--text3);font-style:italic">Sin distritos bisagra con los filtros actuales.</td></tr>`;
+  document.getElementById('b-info').textContent=`${bisagraStart+1}–${Math.min(bisagraStart+10,bisagra.length)} de ${fmtN(bisagra.length)}`;
+  document.getElementById('b-prev').disabled=bisagraP===0;
+  document.getElementById('b-next').disabled=bisagraStart+10>=bisagra.length;
 }
   window.addEventListener('scroll',()=>{
   const hint=document.getElementById('scroll-hint');
