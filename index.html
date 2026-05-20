@@ -113,8 +113,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:.75
 @media(min-width:480px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
 @media(min-width:768px){.kpi-grid{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}}
 .kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:.85rem 1rem}
-.kpi-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;line-height:1.3}
-.kpi-value{font-family:'Syne',sans-serif;font-weight:700;font-size:1.35rem;line-height:1}
+.kpi-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;line-height:1.3;min-height:2.4em}
+.kpi-value{font-family:'Syne',sans-serif;font-weight:700;font-size:1.25rem;line-height:1}
 .kpi-sub{font-size:10px;color:var(--text2);margin-top:.2rem}
 .kpi.fp .kpi-value{color:var(--fp)}.kpi.jp .kpi-value{color:var(--jp)}
 
@@ -670,8 +670,8 @@ function renderKPIs(){
     <div class="kpi jp"><div class="kpi-label">${CONFIG.partido2.etiqueta}</div><div class="kpi-value" id="kv-jp">—</div><div class="kpi-sub">${fmtN(p2V)} votos válidos</div></div>
     <div class="kpi"><div class="kpi-label">Total votos válidos</div><div class="kpi-value" id="kv-total">—</div><div class="kpi-sub">${fmtN(total)} votos</div></div>
     <div class="kpi"><div class="kpi-label">Blancos + Nulos</div><div class="kpi-value" style="color:var(--text2)" id="kv-bn">—</div><div class="kpi-sub">${fmtN(blancos)} blancos · ${fmtN(nulos)} nulos</div></div>
-    <div class="kpi fp"><div class="kpi-label">Distritos liderados · FP</div><div class="kpi-value" id="kv-dfp">—</div><div class="kpi-sub">de ${fmtN(distTotal)} distritos</div></div>
-    <div class="kpi jp"><div class="kpi-label">Distritos liderados · JP</div><div class="kpi-value" id="kv-djp">—</div><div class="kpi-sub">de ${fmtN(distTotal)} distritos</div></div>`;
+    <div class="kpi fp"><div class="kpi-label">Distritos · FP</div><div class="kpi-value" id="kv-dfp">—</div><div class="kpi-sub">de ${fmtN(distTotal)} distritos</div></div>
+    <div class="kpi jp"><div class="kpi-label">Distritos · JP</div><div class="kpi-value" id="kv-djp">—</div><div class="kpi-sub">de ${fmtN(distTotal)} distritos</div></div>`;
 
   function animCount(id,target,fmt,duration=800){
     const el=document.getElementById(id);
@@ -1101,6 +1101,8 @@ function toggleTheme(){
 }
 
 window.addEventListener('DOMContentLoaded',loadData);
+  <script data-goatcounter="https://TUSUBDOMINIO.goatcounter.com/count"
+  async src="//gc.zgo.at/count.js"></script>
 </script>
 </body>
 </html>
